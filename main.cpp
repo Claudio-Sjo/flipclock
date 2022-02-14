@@ -9,6 +9,14 @@ using namespace pimoroni;
 
 uint16_t buffer[PicoDisplay2::WIDTH * PicoDisplay2::HEIGHT];
 PicoDisplay2 pico_display(buffer);
+int w1top;
+int w1dwn;
+int w2top;
+int w2dwn;
+
+// Let's divide the screen in 2 windows
+// Win1 is 2/3 of the screen from the top
+// Win2 is 1/3 of the screen from bottom
 
 // HSV Conversion expects float inputs in the range of 0.00-1.00 for each channel
 // Outputs are rgb in the range 0-255 for each channel
@@ -43,11 +51,19 @@ int main() {
     uint16_t pen;
   };
 
+
+w1top = 0;
+w1dwn = (pico_display.bounds.h / 3) * 2;
+w2top = w1dwn +1;
+w2dwn = pico_display.bounds.h;
+
+// It was 100 baloons, but for half screen we change to 50
+#define BALOONS 50
   std::vector<pt> shapes;
-  for(int i = 0; i < 100; i++) {
+  for(int i = 0; i < BALOONS; i++) {
     pt shape;
-    shape.x = rand() % pico_display.bounds.w;
-    shape.y = rand() % pico_display.bounds.h;
+    shape.x = rand() % (pico_display.bounds.w);
+    shape.y = rand() % w1dwn;
     shape.r = (rand() % 10) + 3;
     shape.dx = float(rand() % 255) / 64.0f;
     shape.dy = float(rand() % 255) / 64.0f;
@@ -74,7 +90,7 @@ int main() {
         shape.dx *= -1;
         shape.x = shape.r;
       }
-      if((shape.x + shape.r) >= pico_display.bounds.w) {
+      if((shape.x + shape.r) >= (pico_display.bounds.w)) {
         shape.dx *= -1;
         shape.x = pico_display.bounds.w - shape.r;
       }
@@ -82,9 +98,9 @@ int main() {
         shape.dy *= -1;
         shape.y = shape.r;
       }
-      if((shape.y + shape.r) >= pico_display.bounds.h) {
+      if((shape.y + shape.r) >= w1dwn) {
         shape.dy *= -1;
-        shape.y = pico_display.bounds.h - shape.r;
+        shape.y = w1dwn - shape.r;
       }
 
       pico_display.set_pen(shape.pen);
