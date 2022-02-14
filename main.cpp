@@ -71,7 +71,9 @@ w2dwn = pico_display.bounds.h;
     shapes.push_back(shape);
   }
 
-  Point text_location(0, 0);
+  Point text_location(pico_display.bounds.w/4, w2top + ((w2dwn - w2top)/2));
+  Point scrolling_line_b(0,w2top);
+  Point scrolling_line_e(pico_display.bounds.w,w2top);
 
   while(true) {
     if(pico_display.is_pressed(pico_display.A)) text_location.x -= 1;
@@ -118,6 +120,7 @@ w2dwn = pico_display.bounds.h;
 
     pico_display.set_pen(255, 255, 255);
     pico_display.text("Hello World", text_location, 320);
+    pico_display.line(scrolling_line_b, scrolling_line_e);
 
     // update screen
     pico_display.update();
