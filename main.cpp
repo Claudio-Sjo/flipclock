@@ -2,6 +2,8 @@
 #include <math.h>
 #include <vector>
 #include <cstdlib>
+#include <stdio.h>
+#include "pico/stdlib.h"
 
 #include "pico_display_2.hpp"
 
@@ -9,14 +11,38 @@ using namespace pimoroni;
 
 uint16_t buffer[PicoDisplay2::WIDTH * PicoDisplay2::HEIGHT];
 PicoDisplay2 pico_display(buffer);
+
+
+// Let's divide the screen in 2 windows
+// Win1 is 2/3 of the screen from the top
+// Win2 is 1/3 of the screen from bottom
 int w1top;
 int w1dwn;
 int w2top;
 int w2dwn;
 
-// Let's divide the screen in 2 windows
-// Win1 is 2/3 of the screen from the top
-// Win2 is 1/3 of the screen from bottom
+// Main string for messages
+char mainString[64];
+
+// Here we play with internal timers
+bool oneSecCallback(struct repeating_timer *t) {
+  static uint8_t hours = 0;
+  static uint8_t min = 0;
+  static uint8_t sec = 0;
+
+  if (++sec >= 60){
+    if (++min >= 60){
+      if (++hours >= 24)
+        hours = 0;
+      min = 0;
+    }
+    sec = 0;
+  }
+  sprintf(mainString,"%02d:%02d:%02d",hours,min,sec);
+
+  return true;
+}
+
 
 // HSV Conversion expects float inputs in the range of 0.00-1.00 for each channel
 // Outputs are rgb in the range 0-255 for each channel
@@ -41,6 +67,8 @@ void from_hsv(float h, float s, float v, uint8_t &r, uint8_t &g, uint8_t &b) {
 int main() {
   pico_display.init();
   pico_display.set_backlight(255);
+
+  struct repeating_timer oneSectimer;
 
   struct pt {
     float      x;
@@ -71,9 +99,14 @@ w2dwn = pico_display.bounds.h;
     shapes.push_back(shape);
   }
 
-  Point text_location(pico_display.bounds.w/4, w2top + ((w2dwn - w2top)/2));
+  Point text_location(pico_display.bounds.w/4, w2top + ((w2dwn - w2top)/3));
+  Point mainS_location(pico_display.bounds.w/2 - 20, w2top + ((w2dwn - w2top)/3 + 16));
   Point scrolling_line_b(0,w2top);
   Point scrolling_line_e(pico_display.bounds.w,w2top);
+
+  sprintf(mainString,"********");
+
+  add_repeating_timer_ms(1000,oneSecCallback, NULL, &oneSectimer);
 
   while(true) {
     if(pico_display.is_pressed(pico_display.A)) text_location.x -= 1;
@@ -120,6 +153,8 @@ w2dwn = pico_display.bounds.h;
 
     pico_display.set_pen(255, 255, 255);
     pico_display.text("Hello World", text_location, 320);
+    pico_display.text(mainString, mainS_location, 320);
+
     pico_display.line(scrolling_line_b, scrolling_line_e);
 
     // update screen
