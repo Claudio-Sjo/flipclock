@@ -21,10 +21,10 @@ void main()
         len++;
     lines = forte_72ptDescriptors[1].offset / len;
 
-    printf("// font header for clock");
-    printf("//");
+    printf("// font header for clock\n");
+    printf("//\n");
 
-    printf("uint8_t digitFont[] = {");
+    printf("uint8_t digitFont[] = {\n");
 
     for (digit = 0; digit < 10; digit++)
     {
@@ -42,37 +42,37 @@ void main()
             for (bytePointer = 0; bytePointer < len; bytePointer++)
             {
                 uint8_t currBit;
-                uint8_t currByte = forte_72ptBitmaps[firstByte + (line * bytePointer)];
+                uint8_t currByte = forte_72ptBitmaps[firstByte + (line * len) + bytePointer];
                 uint8_t counter = 0;
 
-                for (currBit = 0x80; currBit > 0; currBit>>1)
+                for (currBit = 0x80; currBit > 0; currBit = currBit >> 1)
                 {
                     uint8_t theBit = currByte & currBit;
                     
                     switch (search) {
                         case 0 : if (theBit) {
-                            l1b = ((bytePointer - firstByte) * 8) + counter;
+                            l1b = (bytePointer * 8) + counter;
                             search++;
                         }
                         break;
                         case 1:
                             if (!theBit)
                             {
-                                l1e = ((bytePointer - firstByte) * 8) + counter;
+                                l1e = (bytePointer * 8) + counter;
                                 search++;
                             }
                             break;
                         case 2:
                             if (theBit)
                             {
-                                l2b = ((bytePointer - firstByte) * 8) + counter;
+                                l2b = (bytePointer * 8) + counter;
                                 search++;
                             }
                             break;
                         case 3:
                             if (!theBit)
                             {
-                                l2e = ((bytePointer - firstByte) * 8) + counter;
+                                l2e = (bytePointer * 8) + counter;
                                 search++;
                             }
                             break;
@@ -86,9 +86,10 @@ void main()
             if (l2e == 0)
                 l2e = l1e;
 
-            printf("%d,%d,%d,%d",l1b,l1e,l2b,l2e);
+            printf("%d,%d,%d,%d,\n",l1b,l1e,l2b,l2e);
         }
+        printf("\n");
     }
 
-    printf("}");
+    printf("0}");
 }
