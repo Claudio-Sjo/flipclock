@@ -27,11 +27,13 @@ int w2dwn;
 // Main string for messages
 char mainString[64];
 
-// Here we play with internal timers
-bool oneSecCallback(struct repeating_timer *t) {
   static uint8_t hours = 0;
   static uint8_t min = 0;
   static uint8_t sec = 0;
+
+// Here we play with internal timers
+bool oneSecCallback(struct repeating_timer *t) {
+
 
   if (++sec >= 60){
     if (++min >= 60){
@@ -174,13 +176,18 @@ w2dwn = pico_display.bounds.h;
 // Let's try to show some numbers with the new fonts
     pico_display.set_pen(255, 255, 255);
     Point digitPoint(10,60);
-    printDigit(digitPoint,0);
-    digitPoint.x = 60;
-    printDigit(digitPoint,1);
-    digitPoint.x = 90;
-    printDigit(digitPoint,2);
-    digitPoint.x = 130;
-    printDigit(digitPoint,3);
+    printDigit(digitPoint,hours/10);
+    digitPoint.x = 50;
+    printDigit(digitPoint,hours%10);
+    digitPoint.x = 100;
+    printDigit(digitPoint,min/10);
+    digitPoint.x = 150;
+    printDigit(digitPoint,min%10);
+    digitPoint.x = 200;
+    printDigit(digitPoint,sec/10);
+    digitPoint.x = 250;
+    printDigit(digitPoint,sec%10);
+
 
     // Since HSV takes a float from 0.0 to 1.0 indicating hue,
     // then we can divide millis by the number of milliseconds
