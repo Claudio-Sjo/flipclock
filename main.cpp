@@ -7,6 +7,9 @@
 
 #include "pico_display_2.hpp"
 
+#include "clockFonts.h"
+
+
 using namespace pimoroni;
 
 uint16_t buffer[PicoDisplay2::WIDTH * PicoDisplay2::HEIGHT];
@@ -61,6 +64,31 @@ void from_hsv(float h, float s, float v, uint8_t &r, uint8_t &g, uint8_t &b) {
     case 3: r = p; g = q; b = v; break;
     case 4: r = t; g = p; b = v; break;
     case 5: r = v; g = p; b = q; break;
+  }
+}
+
+
+void printDigit(Point location,uint8_t digit)
+{
+  int base = digit * 64 * 4;
+
+  Point start = location;
+  Point end = location;
+
+  for (int i = 0; i < 64; i++)
+  {
+    int ix = 4*i;
+    start.x = location.x + digitFont[base + ix];
+    end.x = location.x + digitFont[base + ix + 1];
+    pico_display.line(start, end);
+    if (digitFont[base + ix] != digitFont[base + ix + 2])
+    {
+     start.x = location.x + digitFont[base + ix +2];
+     end.x = location.x + digitFont[base + ix + 3];
+     pico_display.line(start, end);
+    }
+    start.y = start.y +1;
+    end.y = end.y +1;
   }
 }
 
@@ -142,6 +170,17 @@ w2dwn = pico_display.bounds.h;
       pico_display.circle(Point(shape.x, shape.y), shape.r);
 
     }
+
+// Let's try to show some numbers with the new fonts
+    pico_display.set_pen(255, 255, 255);
+    Point digitPoint(10,60);
+    printDigit(digitPoint,0);
+    digitPoint.x = 60;
+    printDigit(digitPoint,1);
+    digitPoint.x = 90;
+    printDigit(digitPoint,2);
+    digitPoint.x = 130;
+    printDigit(digitPoint,3);
 
     // Since HSV takes a float from 0.0 to 1.0 indicating hue,
     // then we can divide millis by the number of milliseconds

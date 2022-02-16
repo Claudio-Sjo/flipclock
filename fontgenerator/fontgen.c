@@ -91,5 +91,5 @@ void main()
         printf("\n");
     }
 
-    printf("0}");
+    printf("0};");
 }
