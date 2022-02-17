@@ -32,7 +32,7 @@ volatile uint8_t sec   = 0;
 volatile uint8_t scheduler = 0;
 
 // Here we play with internal timers
-bool oneSecCallback(struct repeating_timer *t)
+void oneSecCallback(void)
 {
 
     if (++sec >= 60)
@@ -46,15 +46,15 @@ bool oneSecCallback(struct repeating_timer *t)
         sec = 0;
     }
     sprintf(mainString, "%02d:%02d:%02d", hours, min, sec);
-
-    return true;
 }
 
 bool oneTwenthCallback(struct repeating_timer *t)
 {
 
-    if (++scheduler >= 20)
-        scheduler = 0;
+    if (++scheduler >= 20){
+      oneSecCallback();
+      scheduler = 0;
+    }
 
     return true;
 }
@@ -231,7 +231,6 @@ int main()
     pico_display.init();
     pico_display.set_backlight(255);
 
-    struct repeating_timer oneSectimer;
     struct repeating_timer oneTwenthtimer;
 
     struct pt
@@ -271,7 +270,6 @@ int main()
 
     sprintf(mainString, "********");
 
-    add_repeating_timer_ms(1000, oneSecCallback, NULL, &oneSectimer);
     add_repeating_timer_ms(50, oneTwenthCallback, NULL, &oneTwenthtimer);
 
     while (true)
