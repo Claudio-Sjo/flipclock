@@ -27,11 +27,11 @@ int w2dwn;
 // Main string for messages
 char mainString[64];
 
-static uint8_t hours = 0;
-static uint8_t min = 0;
-static uint8_t sec = 0;
+volatile uint8_t hours = 0;
+volatile uint8_t min = 0;
+volatile uint8_t sec = 0;
 
-static uint8_t scheduler = 0;
+volatile uint8_t scheduler = 0;
 
 // Here we play with internal timers
 bool oneSecCallback(struct repeating_timer *t) {
