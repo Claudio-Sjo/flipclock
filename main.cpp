@@ -117,17 +117,17 @@ void mergeDigitPrint(Point location, uint8_t before, uint8_t after, uint8_t sk)
         int ix  = 4 * i;
         int step = (digitFont[baseBe + ix] - digitFont[baseAf + ix]) / 10;
         int offset = step * sk;
-        start.x    = location.x + digitFont[base + ix] + offset;
+        start.x    = location.x + digitFont[baseBe + ix] - offset;
         step       = (digitFont[baseBe + ix] + 1 - digitFont[baseAf + ix] + 1) / 10;
         offset     = step * sk;
-        end.x      = location.x + digitFont[base + ix + 1] + offset;
+        end.x      = location.x + digitFont[baseBe + ix + 1] - offset;
         pico_display.line(start, end);
         step       = (digitFont[baseBe + ix + 2] - digitFont[baseAf + ix] + 2) / 10;
         offset     = step * sk;
-        start.x    = location.x + digitFont[base + ix + 2] + offset;
+        start.x    = location.x + digitFont[baseBe + ix + 2] - offset;
         step       = (digitFont[baseBe + ix + 3] - digitFont[baseAf + ix + 3]) / 10;
         offset     = step * sk;
-        end.x      = location.x + digitFont[base + ix + 3] + offset;
+        end.x      = location.x + digitFont[baseBe + ix + 3] - offset;
         pico_display.line(start, end);
         start.y = start.y + 1;
         end.y   = end.y + 1;
@@ -146,6 +146,8 @@ void updateHour(uint8_t hh, uint8_t mm, uint8_t ss)
   {
     if ((oldhh / 10) != (hh / 10))
         mergeDigitPrint(digitPoint, oldhh/10, hh/10, scheduler);
+    else
+      printDigit(digitPoint, hours / 10);
     digitPoint.x = 50;
     mergeDigitPrint(digitPoint, oldhh % 10, hh % 10, scheduler);
     if (scheduler > 10)
@@ -163,6 +165,8 @@ void updateHour(uint8_t hh, uint8_t mm, uint8_t ss)
   {
       if ((oldmm / 10) != (mm / 10))
           mergeDigitPrint(digitPoint, oldmm / 10, mm / 10, scheduler);
+      else
+        printDigit(digitPoint, min / 10);
       digitPoint.x = 160;
       mergeDigitPrint(digitPoint, oldmm % 10, mm % 10, scheduler);
       if (scheduler > 10)
@@ -180,6 +184,8 @@ void updateHour(uint8_t hh, uint8_t mm, uint8_t ss)
   {
       if ((oldss / 10) != (ss / 10))
           mergeDigitPrint(digitPoint, oldss / 10, ss / 10, scheduler);
+      else
+        printDigit(digitPoint, sec / 10);
       digitPoint.x = 270;
       mergeDigitPrint(digitPoint, oldss % 10, ss % 10, scheduler);
       if (scheduler > 10)
