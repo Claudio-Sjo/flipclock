@@ -115,19 +115,19 @@ void mergeDigitPrint(Point location, uint8_t before, uint8_t after, uint8_t sk)
     for (int i = 0; i < 64; i++)
     {
         int ix  = 4 * i;
-        int step = (digitFont[baseBe + ix] - digitFont[baseAf + ix]) / 10;
-        int offset = step * sk;
-        start.x    = location.x + digitFont[baseBe + ix] - offset;
-        step       = (digitFont[baseBe + ix + 1] - digitFont[baseAf + ix + 1]) / 10;
-        offset     = step * sk;
-        end.x      = location.x + digitFont[baseBe + ix + 1] - offset;
+        int step   = (digitFont[baseAf + ix] - digitFont[baseBe + ix]);
+        int offset = (step * sk) / 10;
+        start.x    = location.x + digitFont[baseBe + ix] + offset;
+        step       = (digitFont[baseAf + ix + 1] - digitFont[baseBe + ix + 1]);
+        offset     = (step * sk) / 10;
+        end.x      = location.x + digitFont[baseBe + ix + 1] + offset;
         pico_display.line(start, end);
-        step       = (digitFont[baseBe + ix + 2] - digitFont[baseAf + ix + 2]) / 10;
-        offset     = step * sk;
-        start.x    = location.x + digitFont[baseBe + ix + 2] - offset;
-        step       = (digitFont[baseBe + ix + 3] - digitFont[baseAf + ix + 3]) / 10;
-        offset     = step * sk;
-        end.x      = location.x + digitFont[baseBe + ix + 3] - offset;
+        step       = (digitFont[baseAf + ix + 2] - digitFont[baseBe + ix + 2]);
+        offset     = (step * sk) / 10;
+        start.x    = location.x + digitFont[baseBe + ix + 2] + offset;
+        step       = (digitFont[baseAf + ix + 3] - digitFont[baseBe + ix + 3]);
+        offset     = (step * sk) / 10;
+        end.x      = location.x + digitFont[baseBe + ix + 3] + offset;
         pico_display.line(start, end);
         start.y = start.y + 1;
         end.y   = end.y + 1;
