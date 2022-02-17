@@ -27,9 +27,11 @@ int w2dwn;
 // Main string for messages
 char mainString[64];
 
-  static uint8_t hours = 0;
-  static uint8_t min = 0;
-  static uint8_t sec = 0;
+static uint8_t hours = 0;
+static uint8_t min = 0;
+static uint8_t sec = 0;
+
+static uint8_t scheduler = 0;
 
 // Here we play with internal timers
 bool oneSecCallback(struct repeating_timer *t) {
@@ -48,6 +50,14 @@ bool oneSecCallback(struct repeating_timer *t) {
   return true;
 }
 
+bool oneTwenthCallback(struct repeating_timer *t)
+{
+
+    if (++scheduler >= 20)
+      scheduler = 0;
+
+    return true;
+}
 
 // HSV Conversion expects float inputs in the range of 0.00-1.00 for each channel
 // Outputs are rgb in the range 0-255 for each channel
@@ -94,11 +104,101 @@ void printDigit(Point location,uint8_t digit)
   }
 }
 
+void mergeDigitPrint(Point location, uint8_t before, uint8_t after, uint8_t sk)
+{
+    int baseBe = before * 64 * 4;
+    int baseAf = after * 64 * 4;
+
+    Point start = location;
+    Point end   = location;
+
+    for (int i = 0; i < 64; i++)
+    {
+        int ix  = 4 * i;
+        int step = (digitFont[baseBe + ix] - digitFont[baseAf + ix]) / 10;
+        int offset = step * sk;
+        start.x    = location.x + digitFont[base + ix] + offset;
+        step       = (digitFont[baseBe + ix] + 1 - digitFont[baseAf + ix] + 1) / 10;
+        offset     = step * sk;
+        end.x      = location.x + digitFont[base + ix + 1] + offset;
+        pico_display.line(start, end);
+        step       = (digitFont[baseBe + ix + 2] - digitFont[baseAf + ix] + 2) / 10;
+        offset     = step * sk;
+        start.x    = location.x + digitFont[base + ix + 2] + offset;
+        step       = (digitFont[baseBe + ix + 3] - digitFont[baseAf + ix + 3]) / 10;
+        offset     = step * sk;
+        end.x      = location.x + digitFont[base + ix + 3] + offset;
+        pico_display.line(start, end);
+        start.y = start.y + 1;
+        end.y   = end.y + 1;
+    }
+}
+
+
+void updateHour(uint8_t hh, uint8_t mm, uint8_t ss)
+{
+  static uint8_t oldhh, oldmm, oldss;
+  Point          digitPoint(5, 60);
+
+  pico_display.set_pen(255, 255, 255);
+
+  if (oldhh != hh)
+  {
+    if ((oldhh / 10) != (hh / 10))
+        mergeDigitPrint(digitPoint, oldhh/10, hh/10, scheduler);
+    digitPoint.x = 50;
+    mergeDigitPrint(digitPoint, oldhh % 10, hh % 10, scheduler);
+    if (scheduler > 10)
+        oldhh = hh;
+  }
+  else
+  {
+      printDigit(digitPoint, hours / 10);
+      digitPoint.x = 50;
+      printDigit(digitPoint, hours % 10);
+  }
+
+  digitPoint.x = 115;
+  if (oldmm != mm)
+  {
+      if ((oldmm / 10) != (mm / 10))
+          mergeDigitPrint(digitPoint, oldmm / 10, mm / 10, scheduler);
+      digitPoint.x = 160;
+      mergeDigitPrint(digitPoint, oldmm % 10, mm % 10, scheduler);
+      if (scheduler > 10)
+          oldmm = mm;
+  }
+  else
+  {
+      printDigit(digitPoint, min / 10);
+      digitPoint.x = 160;
+      printDigit(digitPoint, min % 10);
+  }
+
+  digitPoint.x = 225;
+  if (oldss != ss)
+  {
+      if ((oldss / 10) != (ss / 10))
+          mergeDigitPrint(digitPoint, oldss / 10, ss / 10, scheduler);
+      digitPoint.x = 270;
+      mergeDigitPrint(digitPoint, oldss % 10, ss % 10, scheduler);
+      if (scheduler > 10)
+          oldss = ss;
+  }
+  else
+  {
+      printDigit(digitPoint, sec / 10);
+      digitPoint.x = 270;
+      printDigit(digitPoint, sec % 10);
+  }
+}
+
 int main() {
   pico_display.init();
   pico_display.set_backlight(255);
 
   struct repeating_timer oneSectimer;
+  struct repeating_timer oneTwenthtimer;
 
   struct pt {
     float      x;
@@ -136,7 +236,8 @@ w2dwn = pico_display.bounds.h;
 
   sprintf(mainString,"********");
 
-  add_repeating_timer_ms(1000,oneSecCallback, NULL, &oneSectimer);
+  add_repeating_timer_ms(1000, oneSecCallback, NULL, &oneSectimer);
+  add_repeating_timer_ms(50, oneTwenthCallback, NULL, &oneTwenthtimer);
 
   while(true) {
     if(pico_display.is_pressed(pico_display.A)) text_location.x -= 1;
@@ -173,21 +274,8 @@ w2dwn = pico_display.bounds.h;
 
     }
 
-// Let's try to show some numbers with the new fonts
-    pico_display.set_pen(255, 255, 255);
-    Point digitPoint(5,60);
-    printDigit(digitPoint,hours/10);
-    digitPoint.x = 50;
-    printDigit(digitPoint,hours%10);
-    digitPoint.x = 115;
-    printDigit(digitPoint,min/10);
-    digitPoint.x = 160;
-    printDigit(digitPoint,min%10);
-    digitPoint.x = 225;
-    printDigit(digitPoint,sec/10);
-    digitPoint.x = 270;
-    printDigit(digitPoint,sec%10);
 
+  updateHour(hours,min,sec);
 
     // Since HSV takes a float from 0.0 to 1.0 indicating hue,
     // then we can divide millis by the number of milliseconds
