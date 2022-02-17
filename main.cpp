@@ -200,6 +200,9 @@ void updateHour(uint8_t hh, uint8_t mm, uint8_t ss)
 }
 
 int main() {
+  
+  static uint8_t oldsk;
+
   pico_display.init();
   pico_display.set_backlight(255);
 
@@ -252,6 +255,8 @@ w2dwn = pico_display.bounds.h;
     if(pico_display.is_pressed(pico_display.X)) text_location.y -= 1;
     if(pico_display.is_pressed(pico_display.Y)) text_location.y += 1;
   
+      if (oldsk != scheduler)
+    {
     pico_display.set_pen(120, 40, 60);
     pico_display.clear();
 
@@ -298,7 +303,10 @@ w2dwn = pico_display.bounds.h;
     pico_display.line(scrolling_line_b, scrolling_line_e);
 
     // update screen
+
     pico_display.update();
+    oldsk = scheduler;
+    }
   }
 
     return 0;
