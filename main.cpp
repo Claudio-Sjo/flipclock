@@ -175,17 +175,17 @@ w2dwn = pico_display.bounds.h;
 
 // Let's try to show some numbers with the new fonts
     pico_display.set_pen(255, 255, 255);
-    Point digitPoint(10,60);
+    Point digitPoint(5,60);
     printDigit(digitPoint,hours/10);
     digitPoint.x = 50;
     printDigit(digitPoint,hours%10);
-    digitPoint.x = 100;
+    digitPoint.x = 115;
     printDigit(digitPoint,min/10);
-    digitPoint.x = 150;
+    digitPoint.x = 160;
     printDigit(digitPoint,min%10);
-    digitPoint.x = 200;
+    digitPoint.x = 225;
     printDigit(digitPoint,sec/10);
-    digitPoint.x = 250;
+    digitPoint.x = 270;
     printDigit(digitPoint,sec%10);
 
 
