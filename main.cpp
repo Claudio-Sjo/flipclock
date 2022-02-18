@@ -105,6 +105,58 @@ void from_hsv(float h, float s, float v, uint8_t &r, uint8_t &g, uint8_t &b)
     }
 }
 
+void myPrintLine(Point start, Point end)
+{
+  Point s = start;
+  Point e = end;
+
+  int len = end.x - start.x;
+  int len_a = abs(len);
+  int direction = (len > 0) ? 1 : -1;
+
+  pico_display.set_pen(0, 0, 0); // Black
+
+  if (len_a < 3)
+    {
+      pico_display.line(start, end);
+    }
+  else
+  {
+    e.x = s.x + 1 * direction;
+    pico_display.line(s, e);
+    e = end;
+    s.x = e.x -1 * direction;
+    pico_display.line(s, e);
+
+    if (len_a >= 4) {
+        pico_display.set_pen(0, 0, 128); // Light Blue
+        s   = start;
+        e.x = s.x + 2 * direction;
+        pico_display.line(s, e);
+        e   = end;
+        s.x = e.x - 2 * direction;
+        pico_display.line(s, e);
+        if (len_a >= 5) {
+            pico_display.set_pen(0, 0, 256); // Intense Blue
+            s = start; 
+            e = end;
+            s.x = s.x + 2 * direction;
+            e.x = e.x -2 * direction;
+            pico_display.line(s, e);
+        }
+    }
+    else
+    {
+        pico_display.set_pen(0, 0, 128); // Light Blue
+        s = start;
+        s.x = s.x + 1 * direction;
+        pico_display.line(s, s);
+    }
+  }
+
+ }
+
+
 void printDigit(Point location, uint8_t digit)
 {
     int base = digit * 64 * 4;
