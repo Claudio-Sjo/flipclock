@@ -122,32 +122,27 @@ void myPrintLine(Point start, Point end)
     }
   else
   {
-    e.x = s.x + 1 * direction;
-    pico_display.line(s, e);
-    e = end;
-    s.x = e.x -1 * direction;
+    s.x = s.x + 1 * direction;
+    e.x = e.x - 1 * direction;
     pico_display.line(s, e);
 
     if (len_a >= 4) {
-        pico_display.set_pen(0, 0, 128); // Light Blue
-        s   = start;
-        e.x = s.x + 2 * direction;
+        pico_display.set_pen(255, 255, 255); // White
+        s.x = s.x + 1 * direction;
+        e.x = e.x - 1 * direction;
         pico_display.line(s, e);
-        e   = end;
-        s.x = e.x - 2 * direction;
-        pico_display.line(s, e);
+        /*
         if (len_a >= 5) {
-            pico_display.set_pen(0, 0, 256); // Intense Blue
-            s = start; 
-            e = end;
-            s.x = s.x + 2 * direction;
-            e.x = e.x -2 * direction;
+            pico_display.set_pen(255, 255, 255); // White
+            s.x = s.x + 1 * direction;
+            e.x = e.x - 1 * direction;
             pico_display.line(s, e);
         }
+        */
     }
     else
     {
-        pico_display.set_pen(0, 0, 128); // Light Blue
+        pico_display.set_pen(255, 255, 255); // White
         s = start;
         s.x = s.x + 1 * direction;
         pico_display.line(s, s);
@@ -169,12 +164,14 @@ void printDigit(Point location, uint8_t digit)
         int ix  = 4 * i;
         start.x = location.x + digitFont[base + ix];
         end.x   = location.x + digitFont[base + ix + 1];
-        pico_display.line(start, end);
+        // pico_display.line(start, end);
+        myPrintLine(start,end);
         if (digitFont[base + ix] != digitFont[base + ix + 2])
         {
             start.x = location.x + digitFont[base + ix + 2];
             end.x   = location.x + digitFont[base + ix + 3];
-            pico_display.line(start, end);
+            // pico_display.line(start, end);
+            myPrintLine(start,end);
         }
         start.y = start.y + 1;
         end.y   = end.y + 1;
@@ -198,14 +195,16 @@ void mergeDigitPrint(Point location, uint8_t before, uint8_t after, uint8_t sk)
         step       = (digitFont[baseAf + ix + 1] - digitFont[baseBe + ix + 1]);
         offset     = (step * sk) / 10;
         end.x      = location.x + digitFont[baseBe + ix + 1] + offset;
-        pico_display.line(start, end);
+        // pico_display.line(start, end);
+        myPrintLine(start,end);
         step    = (digitFont[baseAf + ix + 2] - digitFont[baseBe + ix + 2]);
         offset  = (step * sk) / 10;
         start.x = location.x + digitFont[baseBe + ix + 2] + offset;
         step    = (digitFont[baseAf + ix + 3] - digitFont[baseBe + ix + 3]);
         offset  = (step * sk) / 10;
         end.x   = location.x + digitFont[baseBe + ix + 3] + offset;
-        pico_display.line(start, end);
+        // pico_display.line(start, end);
+        myPrintLine(start,end);
         start.y = start.y + 1;
         end.y   = end.y + 1;
     }
