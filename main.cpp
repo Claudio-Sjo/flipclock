@@ -115,7 +115,7 @@ void myPrintLowFont(Point location, const std::string str)
     int cy = 0;
     int charpos = 0;
 
-    if (str.size() > 10)
+    if (str.size() > 20)
     return;
 
     for (ix = 0; ix < str.size(); ix++)
@@ -145,7 +145,7 @@ void myPrintLowFont(Point location, const std::string str)
                 cy++;
             } 
          }
-        charpos += chsize + 5;
+        charpos += chsize + 2;
         cx = charpos;
         cy = 0;
     }
@@ -346,7 +346,7 @@ int main()
     w2dwn = pico_display.bounds.h;
 
 // It was 100 baloons, but for half screen we change to 50
-#define BALOONS 50
+#define BALOONS 0
     std::vector<pt> shapes;
     for (int i = 0; i < BALOONS; i++)
     {
@@ -426,10 +426,14 @@ int main()
 
             pico_display.set_pen(255, 255, 255);
             // pico_display.text("Hello World", text_location, 320);
-            myPrintLowFont(Point(5,100), "Monday");
-            pico_display.text(mainString, mainS_location, 320);
+            myPrintLowFont(Point(5,120), "21st");
+            myPrintLowFont(Point(160,120), "February");
+            myPrintLowFont(Point(5,160), "Monday");
+            myPrintLowFont(Point(160,160), "2022");
 
-            pico_display.line(scrolling_line_b, scrolling_line_e);
+            //pico_display.text(mainString, mainS_location, 320);
+
+            //pico_display.line(scrolling_line_b, scrolling_line_e);
 
             // update screen
 
