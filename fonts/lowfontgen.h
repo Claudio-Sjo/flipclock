@@ -1,9 +1,9 @@
 // 
 //  Font data for Forte 24pt
-// 
-
+//
+#include "bitmap_db.h"
 // Character bitmaps for Forte 24pt
-const uint_8 forte_24ptBitmaps[] = 
+const uint8_t forte_24ptBitmaps[] = 
 {
 	// @0 '0' (16 pixels wide)
 	0x00, 0x00, //                 

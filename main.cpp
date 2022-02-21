@@ -6,9 +6,9 @@
 #include <vector>
 
 #include "pico_display_2.hpp"
-#include "bitmap_db.h"
-#include "clockFonts.h"
-#include "lowfontgen.h"
+#include "fonts/bitmap_db.h"
+#include "fonts/clockFonts.h"
+#include "fonts/lowfontgen.h"
 
     using namespace pimoroni;
 
@@ -46,7 +46,7 @@ void oneSecCallback(void)
         }
         sec = 0;
     }
-    sprintf(mainString, "%02d:%02d:%02d", hours, min, sec);
+    // sprintf(mainString, "%02d:%02d:%02d", hours, min, sec);
 }
 
 bool oneTwenthCallback(struct repeating_timer *t)
@@ -106,44 +106,53 @@ void from_hsv(float h, float s, float v, uint8_t &r, uint8_t &g, uint8_t &b)
     }
 }
 
-void myPrintLowFont(int x, int y, char *str)
+void myPrintLowFont(Point location, const std::string str)
 {
+    int x = location.x;
+    int y = location.y;
     int ix;
-    int l;
     int cx = 0;
     int cy = 0;
     int charpos = 0;
 
-    if (NULL == str)
+    if (str.size() > 10)
     return;
 
-    if (strlen(str) > 10)
-    return;
-
-    for (ix = 0; ix < l; l++)
+    for (ix = 0; ix < str.size(); ix++)
     {
         // Search for the char
         int chidx = str[ix];
         chidx     = chidx - forte_24ptFontInfo.startChar;
         int chsize   = forte_24ptDescriptors[chidx].widthBits;
         int choffset = forte_24ptDescriptors[chidx].offset;
+        int chheigth = forte_24ptDescriptors[chidx+1].offset / ((forte_24ptDescriptors[chidx].widthBits + 7)/ 8);
+
+        sprintf(mainString, "offset : %d - %d - %d - %d - %0x", 
+            str[ix], forte_24ptFontInfo.startChar,forte_24ptDescriptors[chidx].offset, forte_24ptDescriptors[chidx].widthBits,
+            forte_24ptBitmaps[choffset]);
+
 
         if (chsize != 0)
         {
-            for (int chlen = 0; chlen < chsize; chlen++)
+            for (int hh = 0; hh < chheigth; hh++)
             {
-                int pbyte = forte_24ptBitmaps[choffset + chlen / 8];
-                int chshift = chlen % 8;
-                if ((pbyte << chshift)& 0x80)
-                    pico_display.pixel(Point(x + cx, y + cy));
-                cx++;    
-            }
-            cx = charpos;
-            cy++;
-        }
+                int byteOfs = (hh * ((chsize+7)/8));
+
+                for (int chlen = 0; chlen < chsize; chlen++)
+                 {
+                    int pbyte = forte_24ptBitmaps[byteOfs + choffset + (chlen / 8)];
+                    int chshift = chlen % 8;
+                    if ((pbyte << chshift)& 0x80)
+                        pico_display.pixel(Point(x + cx, y + cy));
+                    cx++;    
+                }
+                cx = charpos;
+                cy++;
+            } 
+         }
         charpos += chsize + 5;
         cx = charpos;
-        cy = 0
+        cy = 0;
     }
 }
 
@@ -255,7 +264,7 @@ void mergeDigitPrint(Point location, uint8_t before, uint8_t after, uint8_t sk)
 void updateHour(uint8_t hh, uint8_t mm, uint8_t ss)
 {
     static uint8_t oldhh, oldmm, oldss;
-    Point          digitPoint(5, 60);
+    Point          digitPoint(5, 20);
 
     pico_display.set_pen(255, 255, 255);
 
@@ -357,7 +366,7 @@ int main()
     }
 
     Point text_location(pico_display.bounds.w / 4, w2top + ((w2dwn - w2top) / 3));
-    Point mainS_location(pico_display.bounds.w / 2 - 20, w2top + ((w2dwn - w2top) / 3 + 16));
+    Point mainS_location(5, w2top + ((w2dwn - w2top) / 3 + 16));
     Point scrolling_line_b(0, w2top);
     Point scrolling_line_e(pico_display.bounds.w, w2top);
 
@@ -421,7 +430,8 @@ int main()
             pico_display.set_led(r, g, b);
 
             pico_display.set_pen(255, 255, 255);
-            pico_display.text("Hello World", text_location, 320);
+            // pico_display.text("Hello World", text_location, 320);
+            myPrintLowFont(Point(5,100), "M01234");
             pico_display.text(mainString, mainS_location, 320);
 
             pico_display.line(scrolling_line_b, scrolling_line_e);
