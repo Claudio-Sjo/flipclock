@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * FILE NAME:			bitmapDb.h
+ * FILE NAME:			bitmap_db.h
  * FILE DESCRIPTION:	Database of all bitmaps in the system
  *
  * FILE CREATION DATE:	24-07-2009

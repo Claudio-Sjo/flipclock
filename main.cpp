@@ -6,13 +6,11 @@
 #include <vector>
 
 #include "pico_display_2.hpp"
-
+#include "bitmap_db.h"
 #include "clockFonts.h"
+#include "lowfontgen.h"
 
-
-
-
-using namespace pimoroni;
+    using namespace pimoroni;
 
 uint16_t     buffer[PicoDisplay2::WIDTH * PicoDisplay2::HEIGHT];
 PicoDisplay2 pico_display(buffer);
@@ -105,6 +103,47 @@ void from_hsv(float h, float s, float v, uint8_t &r, uint8_t &g, uint8_t &b)
         g = p;
         b = q;
         break;
+    }
+}
+
+void myPrintLowFont(int x, int y, char *str)
+{
+    int ix;
+    int l;
+    int cx = 0;
+    int cy = 0;
+    int charpos = 0;
+
+    if (NULL == str)
+    return;
+
+    if (strlen(str) > 10)
+    return;
+
+    for (ix = 0; ix < l; l++)
+    {
+        // Search for the char
+        int chidx = str[ix];
+        chidx     = chidx - forte_24ptFontInfo.startChar;
+        int chsize   = forte_24ptDescriptors[chidx].widthBits;
+        int choffset = forte_24ptDescriptors[chidx].offset;
+
+        if (chsize != 0)
+        {
+            for (int chlen = 0; chlen < chsize; chlen++)
+            {
+                int pbyte = forte_24ptBitmaps[choffset + chlen / 8];
+                int chshift = chlen % 8;
+                if ((pbyte << chshift)& 0x80)
+                    pico_display.pixel(Point(x + cx, y + cy));
+                cx++;    
+            }
+            cx = charpos;
+            cy++;
+        }
+        charpos += chsize + 5;
+        cx = charpos;
+        cy = 0
     }
 }
 
