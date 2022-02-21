@@ -125,11 +125,8 @@ void myPrintLowFont(Point location, const std::string str)
         chidx     = chidx - forte_24ptFontInfo.startChar;
         int chsize   = forte_24ptDescriptors[chidx].widthBits;
         int choffset = forte_24ptDescriptors[chidx].offset;
-        int chheigth = forte_24ptDescriptors[chidx+1].offset / ((forte_24ptDescriptors[chidx].widthBits + 7)/ 8);
-
-        sprintf(mainString, "offset : %d - %d - %d - %d - %0x", 
-            str[ix], forte_24ptFontInfo.startChar,forte_24ptDescriptors[chidx].offset, forte_24ptDescriptors[chidx].widthBits,
-            forte_24ptBitmaps[choffset]);
+        int chheigth = (forte_24ptDescriptors[chidx+1].offset - forte_24ptDescriptors[chidx].offset)
+            / ((forte_24ptDescriptors[chidx].widthBits + 7)/ 8);
 
 
         if (chsize != 0)
@@ -431,7 +428,7 @@ int main()
 
             pico_display.set_pen(255, 255, 255);
             // pico_display.text("Hello World", text_location, 320);
-            myPrintLowFont(Point(5,100), "M01234");
+            myPrintLowFont(Point(5,100), "Monday");
             pico_display.text(mainString, mainS_location, 320);
 
             pico_display.line(scrolling_line_b, scrolling_line_e);
