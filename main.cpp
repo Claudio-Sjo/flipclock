@@ -125,11 +125,9 @@ void myPrintLowFont(Point location, const std::string str)
         chidx     = chidx - forte_24ptFontInfo.startChar;
         int chsize   = forte_24ptDescriptors[chidx].widthBits;
         int choffset = forte_24ptDescriptors[chidx].offset;
-        int chheigth = (forte_24ptDescriptors[chidx+1].offset - forte_24ptDescriptors[chidx].offset)
-            / ((forte_24ptDescriptors[chidx].widthBits + 7)/ 8);
+        int chheigth = forte_24ptDescriptors[chidx].heightBytes;
 
-
-        if (chsize != 0)
+            if (chsize != 0)
         {
             for (int hh = 0; hh < chheigth; hh++)
             {
