@@ -5,15 +5,63 @@
 #include <string.h>
 #include <vector>
 
-#include "pico_display_2.hpp"
 #include "fonts/bitmap_db.h"
 #include "fonts/clockFonts.h"
 #include "fonts/lowfontgen.h"
+#include "pico_display_2.hpp"
 
-    using namespace pimoroni;
+using namespace pimoroni;
 
 uint16_t     buffer[PicoDisplay2::WIDTH * PicoDisplay2::HEIGHT];
 PicoDisplay2 pico_display(buffer);
+
+// We need a state machine for properly handling the display
+enum displayState
+{
+    Clock,
+    ClockSetup,
+    DateSetup,
+    AlarmSetup,
+};
+
+enum setupState
+{
+    Hours,
+    Minutes,
+    Day,
+    Month,
+    Year
+};
+
+enum dayOfWeek
+{
+    Monday,
+    Tuesday,
+    Wednesday,
+    Thursday,
+    Friday,
+    Saturday,
+    Sunday
+};
+
+enum monthOfYear
+{
+    January,
+    February,
+    March,
+    April,
+    May,
+    June,
+    July,
+    August,
+    September,
+    October,
+    November,
+    December
+};
+
+displayState dState = Clock;
+setupState   sState = Hours;
 
 // Let's divide the screen in 2 windows
 // Win1 is 2/3 of the screen from the top
@@ -26,9 +74,13 @@ int w2dwn;
 // Main string for messages
 char mainString[64];
 
-volatile uint8_t hours = 0;
-volatile uint8_t min   = 0;
-volatile uint8_t sec   = 0;
+volatile uint8_t          hours   = 0;
+volatile uint8_t          min     = 0;
+volatile uint8_t          sec     = 0;
+volatile uint8_t          day     = 1;
+volatile enum dayOfWeek   dayweek = Monday;
+volatile enum monthOfYear month   = January;
+volatile uint16_t         year    = 2022;
 
 volatile uint8_t scheduler = 0;
 
@@ -52,9 +104,10 @@ void oneSecCallback(void)
 bool oneTwenthCallback(struct repeating_timer *t)
 {
 
-    if (++scheduler >= 20){
-      oneSecCallback();
-      scheduler = 0;
+    if (++scheduler >= 20)
+    {
+        oneSecCallback();
+        scheduler = 0;
     }
 
     return true;
@@ -111,40 +164,40 @@ void myPrintLowFont(Point location, const std::string str)
     int x = location.x;
     int y = location.y;
     int ix;
-    int cx = 0;
-    int cy = 0;
+    int cx      = 0;
+    int cy      = 0;
     int charpos = 0;
 
     if (str.size() > 20)
-    return;
+        return;
 
     for (ix = 0; ix < str.size(); ix++)
     {
         // Search for the char
-        int chidx = str[ix];
-        chidx     = chidx - forte_24ptFontInfo.startChar;
+        int chidx    = str[ix];
+        chidx        = chidx - forte_24ptFontInfo.startChar;
         int chsize   = forte_24ptDescriptors[chidx].widthBits;
         int choffset = forte_24ptDescriptors[chidx].offset;
         int chheigth = forte_24ptDescriptors[chidx].heightBytes;
 
-            if (chsize != 0)
+        if (chsize != 0)
         {
             for (int hh = 0; hh < chheigth; hh++)
             {
-                int byteOfs = (hh * ((chsize+7)/8));
+                int byteOfs = (hh * ((chsize + 7) / 8));
 
                 for (int chlen = 0; chlen < chsize; chlen++)
-                 {
-                    int pbyte = forte_24ptBitmaps[byteOfs + choffset + (chlen / 8)];
+                {
+                    int pbyte   = forte_24ptBitmaps[byteOfs + choffset + (chlen / 8)];
                     int chshift = chlen % 8;
-                    if ((pbyte << chshift)& 0x80)
+                    if ((pbyte << chshift) & 0x80)
                         pico_display.pixel(Point(x + cx, y + cy));
-                    cx++;    
+                    cx++;
                 }
                 cx = charpos;
                 cy++;
-            } 
-         }
+            }
+        }
         charpos += chsize + 2;
         cx = charpos;
         cy = 0;
@@ -153,50 +206,41 @@ void myPrintLowFont(Point location, const std::string str)
 
 void myPrintLine(Point start, Point end)
 {
-  Point s = start;
-  Point e = end;
+    Point s = start;
+    Point e = end;
 
-  int len = end.x - start.x;
-  int len_a = abs(len);
-  int direction = (len > 0) ? 1 : -1;
+    int len       = end.x - start.x;
+    int len_a     = abs(len);
+    int direction = (len > 0) ? 1 : -1;
 
-  pico_display.set_pen(0, 0, 0); // Black
+    pico_display.set_pen(0, 0, 0); // Black
 
-  if (len_a < 3)
+    if (len_a < 3)
     {
-      pico_display.line(start, end);
+        pico_display.line(start, end);
     }
-  else
-  {
-    s.x = s.x + 1 * direction;
-    e.x = e.x - 1 * direction;
-    pico_display.line(s, e);
-
-    if (len_a >= 4) {
-        pico_display.set_pen(255, 255, 255); // White
+    else
+    {
         s.x = s.x + 1 * direction;
         e.x = e.x - 1 * direction;
         pico_display.line(s, e);
-        /*
-        if (len_a >= 5) {
+
+        if (len_a >= 4)
+        {
             pico_display.set_pen(255, 255, 255); // White
             s.x = s.x + 1 * direction;
             e.x = e.x - 1 * direction;
             pico_display.line(s, e);
         }
-        */
+        else
+        {
+            pico_display.set_pen(255, 255, 255); // White
+            s   = start;
+            s.x = s.x + 1 * direction;
+            pico_display.line(s, s);
+        }
     }
-    else
-    {
-        pico_display.set_pen(255, 255, 255); // White
-        s = start;
-        s.x = s.x + 1 * direction;
-        pico_display.line(s, s);
-    }
-  }
-
- }
-
+}
 
 void printDigit(Point location, uint8_t digit)
 {
@@ -210,14 +254,12 @@ void printDigit(Point location, uint8_t digit)
         int ix  = 4 * i;
         start.x = location.x + digitFont[base + ix];
         end.x   = location.x + digitFont[base + ix + 1];
-        // pico_display.line(start, end);
-        myPrintLine(start,end);
+        myPrintLine(start, end);
         if (digitFont[base + ix] != digitFont[base + ix + 2])
         {
             start.x = location.x + digitFont[base + ix + 2];
             end.x   = location.x + digitFont[base + ix + 3];
-            // pico_display.line(start, end);
-            myPrintLine(start,end);
+            myPrintLine(start, end);
         }
         start.y = start.y + 1;
         end.y   = end.y + 1;
@@ -241,16 +283,14 @@ void mergeDigitPrint(Point location, uint8_t before, uint8_t after, uint8_t sk)
         step       = (digitFont[baseAf + ix + 1] - digitFont[baseBe + ix + 1]);
         offset     = (step * sk) / 10;
         end.x      = location.x + digitFont[baseBe + ix + 1] + offset;
-        // pico_display.line(start, end);
-        myPrintLine(start,end);
+        myPrintLine(start, end);
         step    = (digitFont[baseAf + ix + 2] - digitFont[baseBe + ix + 2]);
         offset  = (step * sk) / 10;
         start.x = location.x + digitFont[baseBe + ix + 2] + offset;
         step    = (digitFont[baseAf + ix + 3] - digitFont[baseBe + ix + 3]);
         offset  = (step * sk) / 10;
         end.x   = location.x + digitFont[baseBe + ix + 3] + offset;
-        // pico_display.line(start, end);
-        myPrintLine(start,end);
+        myPrintLine(start, end);
         start.y = start.y + 1;
         end.y   = end.y + 1;
     }
@@ -261,7 +301,10 @@ void updateHour(uint8_t hh, uint8_t mm, uint8_t ss)
     static uint8_t oldhh, oldmm, oldss;
     Point          digitPoint(5, 20);
 
-    pico_display.set_pen(255, 255, 255);
+    if ((dState == ClockSetup) && (sState == Hours))
+        pico_display.set_pen(0, 255, 0);
+    else
+        pico_display.set_pen(255, 255, 255);
 
     if (oldhh != hh)
     {
@@ -281,6 +324,11 @@ void updateHour(uint8_t hh, uint8_t mm, uint8_t ss)
         printDigit(digitPoint, hours % 10);
     }
 
+    if ((dState == ClockSetup) && (sState == Minutes))
+        pico_display.set_pen(0, 255, 0);
+    else
+        pico_display.set_pen(255, 255, 255);
+
     digitPoint.x = 115;
     if (oldmm != mm)
     {
@@ -299,6 +347,8 @@ void updateHour(uint8_t hh, uint8_t mm, uint8_t ss)
         digitPoint.x = 160;
         printDigit(digitPoint, min % 10);
     }
+
+    pico_display.set_pen(255, 255, 255);
 
     digitPoint.x = 225;
     if (oldss != ss)
@@ -340,6 +390,12 @@ int main()
         uint16_t pen;
     };
 
+    // Strings for printing information
+    char dayStr[5];
+    char montStr[12];
+    char dowStr[12];
+    char yearStr[5];
+
     w1top = 0;
     w1dwn = (pico_display.bounds.h / 3) * 2;
     w2top = w1dwn + 1;
@@ -372,15 +428,118 @@ int main()
     while (true)
     {
         if (pico_display.is_pressed(pico_display.A))
-            text_location.x -= 1;
+        {
+            if (dState == ClockSetup)
+            {
+                dState     = Clock;
+                setupState = Hours;
+            }
+            else
+                dState = ClockSetup;
+        } // key A
         if (pico_display.is_pressed(pico_display.B))
-            text_location.x += 1;
-
+        {
+            if (dState == ClockSetup)
+            {
+                if (++setupState > Year)
+                    setupState = Hours;
+            }
+        }
         if (pico_display.is_pressed(pico_display.X))
-            text_location.y -= 1;
+        {
+            if (dState == ClockSetup)
+            {
+                switch (setupState)
+                {
+                case Hours:
+                    if (++hours > 23)
+                        hours = 0;
+                    break;
+                case Minutes:
+                    if (++min > 59)
+                        min = 0;
+                    break;
+                case Day:
+                    int maxday = 31;
+                    switch (month)
+                    {
+                    case November:
+                    case April:
+                    case June:
+                    case September:
+                        maxday = 30;
+                        break;
+                    case February:
+                        maxday = (year % 4) ? 28 : 29;
+                        break;
+                    }
+                    if (++day > maxday)
+                        day = 1;
+                    dayweek = (day - 1) % 7;
+                    break;
+                case Month:
+                    if (++month > December)
+                        month = January;
+                    break;
+                case Year:
+                    if (year > 2100)
+                        year = 2022;
+                    break;
+                }
+            }
+        }
         if (pico_display.is_pressed(pico_display.Y))
-            text_location.y += 1;
-
+        {
+            if (dState == ClockSetup)
+            {
+                switch (setupState)
+                {
+                case Hours:
+                    if (hours == 0)
+                        hours = 0;
+                    else
+                        hours--;
+                    break;
+                case Minutes:
+                    if (min == 0)
+                        min = 59;
+                    else
+                        min--;
+                    break;
+                case Day:
+                    int maxday = 31;
+                    switch (month)
+                    {
+                    case November:
+                    case April:
+                    case June:
+                    case September:
+                        maxday = 30;
+                        break;
+                    case February:
+                        maxday = (year % 4) ? 28 : 29;
+                        break;
+                    }
+                    if (day == 0)
+                        day = maxday;
+                    else
+                        day--;
+                    break;
+                case Month:
+                    if (month == January)
+                        month = December;
+                    else
+                        month--;
+                    break;
+                case Year:
+                    if (year == 2022)
+                        year = 2100;
+                    else
+                        year--;
+                    break;
+                }
+            }
+        }
         if (oldsk != scheduler)
         {
             pico_display.set_pen(120, 40, 60);
@@ -424,16 +583,131 @@ int main()
             from_hsv((float)millis() / 5000.0f, 1.0f, 0.5f + sinf(millis() / 100.0f / 3.14159f) * 0.5f, r, g, b);
             pico_display.set_led(r, g, b);
 
-            pico_display.set_pen(255, 255, 255);
-            // pico_display.text("Hello World", text_location, 320);
-            myPrintLowFont(Point(5,120), "21st");
-            myPrintLowFont(Point(160,120), "February");
-            myPrintLowFont(Point(5,160), "Monday");
-            myPrintLowFont(Point(160,160), "2022");
+            // Preparing strings for printing data
+            /*
+    char dayStr[5];
+    char montStr[12];
+    char dowStr[12];
+    char yearStr[5];
+    */
 
-            //pico_display.text(mainString, mainS_location, 320);
+            switch (day)
+            {
+            case 1:
+            case 21:
+            case 31:
+                sprintf(dayStr, "%dst", day);
+                break;
+            case 2:
+            case 22:
+                sprintf(dayStr, "%dnd", day);
+                break;
+            case 3:
+            case 23:
+                sprintf(dayStr, "%drd", day);
+                break;
+            default:
+                sprintf(dayStr, "%dth", day);
+                break;
+            }
 
-            //pico_display.line(scrolling_line_b, scrolling_line_e);
+            switch (month)
+            {
+            case January:
+                sprintf(montStr, "January");
+                break;
+            case February:
+                sprintf(montStr, "February");
+                break;
+            case March:
+                sprintf(montStr, "March");
+                break;
+            case April:
+                sprintf(montStr, "April");
+                break;
+            case May:
+                sprintf(montStr, "May");
+                break;
+            case June:
+                sprintf(montStr, "June");
+                break;
+            case July:
+                sprintf(montStr, "July");
+                break;
+            case August:
+                sprintf(montStr, "August");
+                break;
+            case September:
+                sprintf(montStr, "September");
+                break;
+            case October:
+                sprintf(montStr, "October");
+                break;
+            case November:
+                sprintf(montStr, "November");
+                break;
+            case December:
+                sprintf(montStr, "December");
+                break;
+            }
+
+            switch (dayweek) 
+            {
+            case Monday:
+                sprintf(dowStr, "Monday");
+                break;
+            case Tuesday:
+                sprintf(dowStr, "Tuesday");
+                break;
+            case Wednesday:
+                sprintf(dowStr, "Wednesday");
+                break;
+            case Thursday:
+                sprintf(dowStr, "Thursday");
+                break;
+            case Friday:
+                sprintf(dowStr, "Friday");
+                break;
+            case Saturday:
+                sprintf(dowStr, "Saturday");
+                break;
+            case Sunday:
+                sprintf(dowStr, "Sunday");
+                break;
+            }
+
+            sprintf(yearStr,"%d",year);
+
+            if ((dState == ClockSetup) && (sState == Day))
+                pico_display.set_pen(0, 255, 0);
+            else
+                pico_display.set_pen(255, 255, 255); // pico_display.text("Hello World", text_location, 320);
+            myPrintLowFont(Point(5, 120), "21st");
+
+            if ((dState == ClockSetup) && (sState == Month))
+                pico_display.set_pen(0, 255, 0);
+            else
+                pico_display.set_pen(255, 255, 255); // pico_display.text("Hello World", text_location, 320);
+            myPrintLowFont(Point(160, 120), "February");
+            if (dayweek == Sunday)
+                pico_display.set_pen(0, 0, 255);
+            else
+                pico_display.set_pen(255, 255, 255); // pico_display.text("Hello World", text_location, 320);
+            myPrintLowFont(Point(5, 160), "Monday");
+            if ((dState == ClockSetup) && (sState == Year))
+                pico_display.set_pen(0, 255, 0);
+            else
+                pico_display.set_pen(255, 255, 255); // pico_display.text("Hello World", text_location, 320);
+            myPrintLowFont(Point(160, 160), "2022");
+
+            if (dState == ClockSetup)
+            {
+                pico_display.set_pen(0, 255, 0); // green
+                myPrintLowFont(Point(100, 200), "Clock Setup");
+            }
+            // pico_display.text(mainString, mainS_location, 320);
+
+            // pico_display.line(scrolling_line_b, scrolling_line_e);
 
             // update screen
 
