@@ -206,7 +206,7 @@ void myPrintLowFont(Point location, const std::string str)
     }
 }
 
-void myPrintLine(Point start, Point end)
+void myPrintLine(Point start, Point end, int r, int g, int b)
 {
     Point s = start;
     Point e = end;
@@ -229,14 +229,14 @@ void myPrintLine(Point start, Point end)
 
         if (len_a >= 4)
         {
-            pico_display.set_pen(255, 255, 255); // White
+            pico_display.set_pen(r, g, b); // White
             s.x = s.x + 1 * direction;
             e.x = e.x - 1 * direction;
             pico_display.line(s, e);
         }
         else
         {
-            pico_display.set_pen(255, 255, 255); // White
+            pico_display.set_pen(r, g, b); // White
             s   = start;
             s.x = s.x + 1 * direction;
             pico_display.line(s, s);
@@ -244,7 +244,7 @@ void myPrintLine(Point start, Point end)
     }
 }
 
-void printDigit(Point location, uint8_t digit)
+void printDigit(Point location, uint8_t digit, int r, int g, int b)
 {
     int base = digit * 64 * 4;
 
@@ -256,19 +256,19 @@ void printDigit(Point location, uint8_t digit)
         int ix  = 4 * i;
         start.x = location.x + digitFont[base + ix];
         end.x   = location.x + digitFont[base + ix + 1];
-        myPrintLine(start, end);
+        myPrintLine(start, end,r,g,b);
         if (digitFont[base + ix] != digitFont[base + ix + 2])
         {
             start.x = location.x + digitFont[base + ix + 2];
             end.x   = location.x + digitFont[base + ix + 3];
-            myPrintLine(start, end);
+            myPrintLine(start, end,r,g,b);
         }
         start.y = start.y + 1;
         end.y   = end.y + 1;
     }
 }
 
-void mergeDigitPrint(Point location, uint8_t before, uint8_t after, uint8_t sk)
+void mergeDigitPrint(Point location, uint8_t before, uint8_t after, uint8_t sk, int r, int g, int b)
 {
     int baseBe = before * 64 * 4;
     int baseAf = after * 64 * 4;
@@ -285,14 +285,14 @@ void mergeDigitPrint(Point location, uint8_t before, uint8_t after, uint8_t sk)
         step       = (digitFont[baseAf + ix + 1] - digitFont[baseBe + ix + 1]);
         offset     = (step * sk) / 10;
         end.x      = location.x + digitFont[baseBe + ix + 1] + offset;
-        myPrintLine(start, end);
+        myPrintLine(start, end,r,g,b);
         step    = (digitFont[baseAf + ix + 2] - digitFont[baseBe + ix + 2]);
         offset  = (step * sk) / 10;
         start.x = location.x + digitFont[baseBe + ix + 2] + offset;
         step    = (digitFont[baseAf + ix + 3] - digitFont[baseBe + ix + 3]);
         offset  = (step * sk) / 10;
         end.x   = location.x + digitFont[baseBe + ix + 3] + offset;
-        myPrintLine(start, end);
+        myPrintLine(start, end,r,g,b);
         start.y = start.y + 1;
         end.y   = end.y + 1;
     }
@@ -302,73 +302,78 @@ void updateHour(uint8_t hh, uint8_t mm, uint8_t ss)
 {
     static uint8_t oldhh, oldmm, oldss;
     Point          digitPoint(5, 20);
+    int r, g, b;
 
     if ((dState == ClockSetup) && (sState == Hours))
-        pico_display.set_pen(0, 255, 0);
+    {
+        r = 0; g = 255; b = 0;
+    }
     else
-        pico_display.set_pen(255, 255, 255);
+        r = g = b = 255;
 
     if (oldhh != hh)
     {
         if ((oldhh / 10) != (hh / 10))
-            mergeDigitPrint(digitPoint, oldhh / 10, hh / 10, scheduler);
+            mergeDigitPrint(digitPoint, oldhh / 10, hh / 10, scheduler,r,g,b);
         else
-            printDigit(digitPoint, hours / 10);
+            printDigit(digitPoint, hours / 10,r,g,b);
         digitPoint.x = 50;
-        mergeDigitPrint(digitPoint, oldhh % 10, hh % 10, scheduler);
+        mergeDigitPrint(digitPoint, oldhh % 10, hh % 10, scheduler,r,g,b);
         if (scheduler > 10)
             oldhh = hh;
     }
     else
     {
-        printDigit(digitPoint, hours / 10);
+        printDigit(digitPoint, hours / 10,r,g,b);
         digitPoint.x = 50;
-        printDigit(digitPoint, hours % 10);
+        printDigit(digitPoint, hours % 10,r,g,b);
     }
 
     if ((dState == ClockSetup) && (sState == Minutes))
-        pico_display.set_pen(0, 255, 0);
+    {
+        r = 0; g = 255; b = 0;
+    }
     else
-        pico_display.set_pen(255, 255, 255);
+        r = g = b = 255;
 
     digitPoint.x = 115;
     if (oldmm != mm)
     {
         if ((oldmm / 10) != (mm / 10))
-            mergeDigitPrint(digitPoint, oldmm / 10, mm / 10, scheduler);
+            mergeDigitPrint(digitPoint, oldmm / 10, mm / 10, scheduler,r,g,b);
         else
-            printDigit(digitPoint, min / 10);
+            printDigit(digitPoint, min / 10,r,g,b);
         digitPoint.x = 160;
-        mergeDigitPrint(digitPoint, oldmm % 10, mm % 10, scheduler);
+        mergeDigitPrint(digitPoint, oldmm % 10, mm % 10, scheduler,r,g,b);
         if (scheduler > 10)
             oldmm = mm;
     }
     else
     {
-        printDigit(digitPoint, min / 10);
+        printDigit(digitPoint, min / 10,r,g,b);
         digitPoint.x = 160;
-        printDigit(digitPoint, min % 10);
+        printDigit(digitPoint, min % 10,r,g,b);
     }
 
-    pico_display.set_pen(255, 255, 255);
+    r = g = b = 255;
 
     digitPoint.x = 225;
     if (oldss != ss)
     {
         if ((oldss / 10) != (ss / 10))
-            mergeDigitPrint(digitPoint, oldss / 10, ss / 10, scheduler);
+            mergeDigitPrint(digitPoint, oldss / 10, ss / 10, scheduler,r,g,b);
         else
-            printDigit(digitPoint, sec / 10);
+            printDigit(digitPoint, sec / 10,r,g,b);
         digitPoint.x = 270;
-        mergeDigitPrint(digitPoint, oldss % 10, ss % 10, scheduler);
+        mergeDigitPrint(digitPoint, oldss % 10, ss % 10, scheduler,r,g,b);
         if (scheduler > 10)
             oldss = ss;
     }
     else
     {
-        printDigit(digitPoint, sec / 10);
+        printDigit(digitPoint, sec / 10,r,g,b);
         digitPoint.x = 270;
-        printDigit(digitPoint, sec % 10);
+        printDigit(digitPoint, sec % 10,r,g,b);
     }
 }
 
@@ -687,28 +692,28 @@ int main()
                 pico_display.set_pen(0, 255, 0);
             else
                 pico_display.set_pen(255, 255, 255); // pico_display.text("Hello World", text_location, 320);
-            myPrintLowFont(Point(5, 120), "21st");
+            myPrintLowFont(Point(5, 120), dayStr);
 
             if ((dState == ClockSetup) && (sState == Month))
                 pico_display.set_pen(0, 255, 0);
             else
                 pico_display.set_pen(255, 255, 255); // pico_display.text("Hello World", text_location, 320);
-            myPrintLowFont(Point(160, 120), "February");
+            myPrintLowFont(Point(160, 120), montStr);
             if (dayweek == Sunday)
-                pico_display.set_pen(0, 0, 255);
+                pico_display.set_pen(255, 0, 0); // Red
             else
                 pico_display.set_pen(255, 255, 255); // pico_display.text("Hello World", text_location, 320);
-            myPrintLowFont(Point(5, 160), "Monday");
+            myPrintLowFont(Point(5, 160), dowStr);
             if ((dState == ClockSetup) && (sState == Year))
                 pico_display.set_pen(0, 255, 0);
             else
                 pico_display.set_pen(255, 255, 255); // pico_display.text("Hello World", text_location, 320);
-            myPrintLowFont(Point(160, 160), "2022");
+            myPrintLowFont(Point(160, 160), yearStr);
 
             if (dState == ClockSetup)
             {
                 pico_display.set_pen(0, 255, 0); // green
-                myPrintLowFont(Point(100, 200), "Clock Setup");
+                myPrintLowFont(Point(100, 200), "Setup");
             }
             // pico_display.text(mainString, mainS_location, 320);
 
