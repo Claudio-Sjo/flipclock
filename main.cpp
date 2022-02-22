@@ -432,7 +432,7 @@ int main()
             if (dState == ClockSetup)
             {
                 dState     = Clock;
-                setupState = Hours;
+                sState = Hours;
             }
             else
                 dState = ClockSetup;
@@ -441,15 +441,15 @@ int main()
         {
             if (dState == ClockSetup)
             {
-                if (++setupState > Year)
-                    setupState = Hours;
+                if (++sState > Year)
+                    sState = Hours;
             }
         }
         if (pico_display.is_pressed(pico_display.X))
         {
             if (dState == ClockSetup)
             {
-                switch (setupState)
+                switch (sState)
                 {
                 case Hours:
                     if (++hours > 23)
@@ -492,7 +492,7 @@ int main()
         {
             if (dState == ClockSetup)
             {
-                switch (setupState)
+                switch (sState)
                 {
                 case Hours:
                     if (hours == 0)
