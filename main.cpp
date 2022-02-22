@@ -651,7 +651,7 @@ int main()
                 break;
             }
 
-            switch (dayweek) 
+            switch (dayweek)
             {
             case Monday:
                 sprintf(dowStr, "Monday");
@@ -676,7 +676,7 @@ int main()
                 break;
             }
 
-            sprintf(yearStr,"%d",year);
+            sprintf(yearStr, "%d", year);
 
             if ((dState == ClockSetup) && (sState == Day))
                 pico_display.set_pen(0, 255, 0);
