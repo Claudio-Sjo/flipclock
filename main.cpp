@@ -60,8 +60,10 @@ enum monthOfYear
     December
 };
 
-displayState dState = Clock;
-setupState   sState = Hours;
+// displayState dState = Clock;
+// setupState   sState = Hours;
+int dState = Clock;
+int sState = Hours;
 
 // Let's divide the screen in 2 windows
 // Win1 is 2/3 of the screen from the top
@@ -78,8 +80,8 @@ volatile uint8_t          hours   = 0;
 volatile uint8_t          min     = 0;
 volatile uint8_t          sec     = 0;
 volatile uint8_t          day     = 1;
-volatile enum dayOfWeek   dayweek = Monday;
-volatile enum monthOfYear month   = January;
+volatile uint8_t   dayweek = Monday;
+volatile uint8_t month   = January;
 volatile uint16_t         year    = 2022;
 
 volatile uint8_t scheduler = 0;
@@ -449,6 +451,8 @@ int main()
         {
             if (dState == ClockSetup)
             {
+                int maxday = 31;
+
                 switch (sState)
                 {
                 case Hours:
@@ -459,8 +463,7 @@ int main()
                     if (++min > 59)
                         min = 0;
                     break;
-                case Day:
-                    int maxday = 31;
+                case Day:{
                     switch (month)
                     {
                     case November:
@@ -476,6 +479,7 @@ int main()
                     if (++day > maxday)
                         day = 1;
                     dayweek = (day - 1) % 7;
+                }
                     break;
                 case Month:
                     if (++month > December)
@@ -492,6 +496,8 @@ int main()
         {
             if (dState == ClockSetup)
             {
+                int maxday = 31;
+
                 switch (sState)
                 {
                 case Hours:
@@ -507,7 +513,6 @@ int main()
                         min--;
                     break;
                 case Day:
-                    int maxday = 31;
                     switch (month)
                     {
                     case November:
