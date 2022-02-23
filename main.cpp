@@ -10,10 +10,84 @@
 #include "fonts/lowfontgen.h"
 #include "pico_display_2.hpp"
 
+#define BUTTONS 4   // only 4 buttons on the pico display
+typedef enum
+{
+    NoKey = 0x80,
+    // only <128 from UART
+    ShortClick,
+    LongClick
+} Key;
+
+typedef enum
+{
+    Idle,
+    Debouncing,
+    Pressed,
+    Waiting
+} BtnState;
+
+typedef struct
+{
+    uint8_t  button; /* GPIO pin */
+    bool     pol;    /* polarity: SET active high, RESET active low */
+    BtnState state;  /* current state */
+    uint32_t tick;   /* time of press */
+    Key      kShort; /* key for short press */
+    Key      kLong;  /* key for long press */
+} Button;
+
 using namespace pimoroni;
 
 uint16_t     buffer[PicoDisplay2::WIDTH * PicoDisplay2::HEIGHT];
 PicoDisplay2 pico_display(buffer);
+
+Button keyA =
+    {
+        pico_display.A,
+        true,
+        Idle,
+        0,
+        ShortClick,
+        LongClick};
+
+Button keyB =
+    {
+        pico_display.B,
+        true,
+        Idle,
+        0,
+        ShortClick,
+        LongClick};
+
+Button keyX =
+    {
+        pico_display.X,
+        true,
+        Idle,
+        0,
+        ShortClick,
+        LongClick};
+
+Button keyY =
+    {
+        pico_display.Y,
+        true,
+        Idle,
+        0,
+        ShortClick,
+        LongClick};
+
+Button *buttons[] = 
+{
+    keyA,
+    keyB,
+    KeyX,
+    keyY
+}
+
+static uint8_t curBtn = 0;
+
 
 // We need a state machine for properly handling the display
 enum displayState
@@ -76,13 +150,13 @@ int w2dwn;
 // Main string for messages
 char mainString[64];
 
-volatile uint8_t          hours   = 0;
-volatile uint8_t          min     = 0;
-volatile uint8_t          sec     = 0;
-volatile uint8_t          day     = 1;
-volatile uint8_t   dayweek = Monday;
-volatile uint8_t month   = January;
-volatile uint16_t         year    = 2022;
+volatile uint8_t  hours   = 0;
+volatile uint8_t  min     = 0;
+volatile uint8_t  sec     = 0;
+volatile uint8_t  day     = 1;
+volatile uint8_t  dayweek = Monday;
+volatile uint8_t  month   = January;
+volatile uint16_t year    = 2022;
 
 volatile uint8_t scheduler = 0;
 
@@ -256,12 +330,12 @@ void printDigit(Point location, uint8_t digit, int r, int g, int b)
         int ix  = 4 * i;
         start.x = location.x + digitFont[base + ix];
         end.x   = location.x + digitFont[base + ix + 1];
-        myPrintLine(start, end,r,g,b);
+        myPrintLine(start, end, r, g, b);
         if (digitFont[base + ix] != digitFont[base + ix + 2])
         {
             start.x = location.x + digitFont[base + ix + 2];
             end.x   = location.x + digitFont[base + ix + 3];
-            myPrintLine(start, end,r,g,b);
+            myPrintLine(start, end, r, g, b);
         }
         start.y = start.y + 1;
         end.y   = end.y + 1;
@@ -285,14 +359,14 @@ void mergeDigitPrint(Point location, uint8_t before, uint8_t after, uint8_t sk, 
         step       = (digitFont[baseAf + ix + 1] - digitFont[baseBe + ix + 1]);
         offset     = (step * sk) / 10;
         end.x      = location.x + digitFont[baseBe + ix + 1] + offset;
-        myPrintLine(start, end,r,g,b);
+        myPrintLine(start, end, r, g, b);
         step    = (digitFont[baseAf + ix + 2] - digitFont[baseBe + ix + 2]);
         offset  = (step * sk) / 10;
         start.x = location.x + digitFont[baseBe + ix + 2] + offset;
         step    = (digitFont[baseAf + ix + 3] - digitFont[baseBe + ix + 3]);
         offset  = (step * sk) / 10;
         end.x   = location.x + digitFont[baseBe + ix + 3] + offset;
-        myPrintLine(start, end,r,g,b);
+        myPrintLine(start, end, r, g, b);
         start.y = start.y + 1;
         end.y   = end.y + 1;
     }
@@ -302,11 +376,13 @@ void updateHour(uint8_t hh, uint8_t mm, uint8_t ss)
 {
     static uint8_t oldhh, oldmm, oldss;
     Point          digitPoint(5, 20);
-    int r, g, b;
+    int            r, g, b;
 
     if ((dState == ClockSetup) && (sState == Hours))
     {
-        r = 0; g = 255; b = 0;
+        r = 0;
+        g = 255;
+        b = 0;
     }
     else
         r = g = b = 255;
@@ -314,24 +390,26 @@ void updateHour(uint8_t hh, uint8_t mm, uint8_t ss)
     if (oldhh != hh)
     {
         if ((oldhh / 10) != (hh / 10))
-            mergeDigitPrint(digitPoint, oldhh / 10, hh / 10, scheduler,r,g,b);
+            mergeDigitPrint(digitPoint, oldhh / 10, hh / 10, scheduler, r, g, b);
         else
-            printDigit(digitPoint, hours / 10,r,g,b);
+            printDigit(digitPoint, hours / 10, r, g, b);
         digitPoint.x = 50;
-        mergeDigitPrint(digitPoint, oldhh % 10, hh % 10, scheduler,r,g,b);
+        mergeDigitPrint(digitPoint, oldhh % 10, hh % 10, scheduler, r, g, b);
         if (scheduler > 10)
             oldhh = hh;
     }
     else
     {
-        printDigit(digitPoint, hours / 10,r,g,b);
+        printDigit(digitPoint, hours / 10, r, g, b);
         digitPoint.x = 50;
-        printDigit(digitPoint, hours % 10,r,g,b);
+        printDigit(digitPoint, hours % 10, r, g, b);
     }
 
     if ((dState == ClockSetup) && (sState == Minutes))
     {
-        r = 0; g = 255; b = 0;
+        r = 0;
+        g = 255;
+        b = 0;
     }
     else
         r = g = b = 255;
@@ -340,19 +418,19 @@ void updateHour(uint8_t hh, uint8_t mm, uint8_t ss)
     if (oldmm != mm)
     {
         if ((oldmm / 10) != (mm / 10))
-            mergeDigitPrint(digitPoint, oldmm / 10, mm / 10, scheduler,r,g,b);
+            mergeDigitPrint(digitPoint, oldmm / 10, mm / 10, scheduler, r, g, b);
         else
-            printDigit(digitPoint, min / 10,r,g,b);
+            printDigit(digitPoint, min / 10, r, g, b);
         digitPoint.x = 160;
-        mergeDigitPrint(digitPoint, oldmm % 10, mm % 10, scheduler,r,g,b);
+        mergeDigitPrint(digitPoint, oldmm % 10, mm % 10, scheduler, r, g, b);
         if (scheduler > 10)
             oldmm = mm;
     }
     else
     {
-        printDigit(digitPoint, min / 10,r,g,b);
+        printDigit(digitPoint, min / 10, r, g, b);
         digitPoint.x = 160;
-        printDigit(digitPoint, min % 10,r,g,b);
+        printDigit(digitPoint, min % 10, r, g, b);
     }
 
     r = g = b = 255;
@@ -361,20 +439,126 @@ void updateHour(uint8_t hh, uint8_t mm, uint8_t ss)
     if (oldss != ss)
     {
         if ((oldss / 10) != (ss / 10))
-            mergeDigitPrint(digitPoint, oldss / 10, ss / 10, scheduler,r,g,b);
+            mergeDigitPrint(digitPoint, oldss / 10, ss / 10, scheduler, r, g, b);
         else
-            printDigit(digitPoint, sec / 10,r,g,b);
+            printDigit(digitPoint, sec / 10, r, g, b);
         digitPoint.x = 270;
-        mergeDigitPrint(digitPoint, oldss % 10, ss % 10, scheduler,r,g,b);
+        mergeDigitPrint(digitPoint, oldss % 10, ss % 10, scheduler, r, g, b);
         if (scheduler > 10)
             oldss = ss;
     }
     else
     {
-        printDigit(digitPoint, sec / 10,r,g,b);
+        printDigit(digitPoint, sec / 10, r, g, b);
         digitPoint.x = 270;
-        printDigit(digitPoint, sec % 10,r,g,b);
+        printDigit(digitPoint, sec % 10, r, g, b);
     }
+}
+
+// Debouncing mechanism by Zuk
+
+Key serveButton(Button *b)
+{
+    Key      key = NoKey;
+    uint32_t now = GetTick();
+    bool     btn = b->pol == pico_display.is_pressed(b->button);
+    switch (b->state)
+    {
+    case Idle:
+        if (btn)
+        {
+            /* The button has been depressed */
+            /* Remember when */
+            b->tick = now;
+            /* and move to Debouncing state */
+            b->state = Debouncing;
+        }
+        break;
+    case Debouncing:
+        if (btn)
+        {
+            if (now - b->tick > CLICKDEBOUNCE)
+                /* Real press */
+                b->state = Pressed;
+        }
+        else
+        {
+            /* It was a bounce, start over */
+            b->state = Idle;
+        }
+        break;
+    case Pressed:
+        if (btn)
+        { /* Still pressed, is this a long press? */
+            if (now - b->tick > CLICKLONG)
+            {
+                /* A long press has been detected */
+                key = b->kLong;
+                /* Wait for release */
+                b->state = Waiting;
+            }
+        }
+        else
+        { /* Released, is it a short press? */
+            if (now - b->tick > CLICKSHORT)
+            {
+                /* A short press has been detected */
+                key = b->kShort;
+            }
+            /* Return to idle */
+            b->state = Idle;
+        }
+        break;
+    case Waiting:
+        if (!btn)
+        {
+            b->state = Idle;
+        }
+        break;
+    }
+    return key;
+}
+
+Key ReadInput(void)
+{
+    Key key = NoKey;
+    if (keysReady)
+    {
+        /* Read oldest key and move pointer */
+        key = inputRing[keyRead++];
+        /* Normalize to ring size */
+        keyRead %= MAXQUEUE;
+        /* Make slot available */
+        keysReady--;
+    }
+    return key;
+}
+
+void queueKey(Key key)
+{
+    if (key == NoKey)
+        return;
+    // valid char received, enqueue it!
+    __disable_irq();
+    /* Space left on input ring? */
+    if (keysReady < MAXQUEUE)
+    {
+        inputRing[keyWrite++] = key;
+        keyWrite %= MAXQUEUE; // pointer wrap around
+        keysReady++;
+    }
+    __enable_irq();
+}
+
+bool Debounce(struct repeating_timer *t)
+{
+    Key key = serveButton(&buttons[curBtn]);
+    if (++curBtn == BUTTONS)
+        curBtn = 0;
+    /* Did we find anything to do? */
+    queueKey(key);
+
+    return true;
 }
 
 int main()
@@ -384,6 +568,8 @@ int main()
 
     pico_display.init();
     pico_display.set_backlight(255);
+
+    struct repeating_timer debounceTimer;
 
     struct repeating_timer oneTwenthtimer;
 
@@ -430,6 +616,9 @@ int main()
 
     sprintf(mainString, "********");
 
+// Debouncing Timer
+    add_repeating_timer_ms(2, oneTwenthCallback, NULL, &debounceTimer);
+
     add_repeating_timer_ms(50, oneTwenthCallback, NULL, &oneTwenthtimer);
 
     while (true)
@@ -438,7 +627,7 @@ int main()
         {
             if (dState == ClockSetup)
             {
-                dState     = Clock;
+                dState = Clock;
                 sState = Hours;
             }
             else
@@ -468,7 +657,8 @@ int main()
                     if (++min > 59)
                         min = 0;
                     break;
-                case Day:{
+                case Day:
+                {
                     switch (month)
                     {
                     case November:
@@ -485,7 +675,7 @@ int main()
                         day = 1;
                     dayweek = (day - 1) % 7;
                 }
-                    break;
+                break;
                 case Month:
                     if (++month > December)
                         month = January;
