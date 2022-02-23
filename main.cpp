@@ -1,4 +1,5 @@
 #include "pico/stdlib.h"
+#include "pico/critical_section.h"
 #include <cstdlib>
 #include <math.h>
 #include <stdio.h>
@@ -9,6 +10,8 @@
 #include "fonts/clockFonts.h"
 #include "fonts/lowfontgen.h"
 #include "pico_display_2.hpp"
+
+critical_section_t debounce_section;
 
 #define BUTTONS 4 // only 4 buttons on the pico display
 
@@ -542,7 +545,7 @@ void queueKey(Key key)
     if (key == NoKey)
         return;
     // valid char received, enqueue it!
-    __disable_irq();
+    critical_section_enter_blocking(&debounce_section);
     /* Space left on input ring? */
     if (keysReady < MAXQUEUE)
     {
@@ -550,7 +553,7 @@ void queueKey(Key key)
         keyWrite %= MAXQUEUE; // pointer wrap around
         keysReady++;
     }
-    __enable_irq();
+    critical_section_exit(&debounce_section);
 }
 
 bool Debounce(struct repeating_timer *t)
@@ -568,6 +571,7 @@ int main()
 {
 
     static uint8_t oldsk;
+    critical_section_init(&debounce_section);
 
     pico_display.init();
     pico_display.set_backlight(255);
@@ -620,7 +624,7 @@ int main()
     sprintf(mainString, "********");
 
     // Debouncing Timer
-    add_repeating_timer_ms(2, oneTwenthCallback, NULL, &debounceTimer);
+    add_repeating_timer_ms(2, Debounce, NULL, &debounceTimer);
 
     add_repeating_timer_ms(50, oneTwenthCallback, NULL, &oneTwenthtimer);
 
