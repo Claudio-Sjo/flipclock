@@ -295,7 +295,7 @@ void myPrintLine(Point start, Point end, int r, int g, int b)
     int len_a     = abs(len);
     int direction = (len > 0) ? 1 : -1;
 
-    pico_display.set_pen(0, 0, 0); // Black
+    pico_display.set_pen(r, g, b); // Black
 
     if (len_a < 3)
     {
@@ -545,6 +545,7 @@ void queueKey(Key key)
     if (key == NoKey)
         return;
     // valid char received, enqueue it!
+    sprintf(mainString,"valid key : %d", key);
     critical_section_enter_blocking(&debounce_section);
     /* Space left on input ring? */
     if (keysReady < MAXQUEUE)
@@ -574,7 +575,7 @@ int main()
     critical_section_init(&debounce_section);
 
     pico_display.init();
-    pico_display.set_backlight(255);
+    pico_display.set_backlight(128); // was 255
 
     struct repeating_timer debounceTimer;
 
@@ -632,7 +633,7 @@ int main()
     {
         Key pressed = ReadInput();
 
-        if (pressed == Key_A)
+        if (pressed == Key_AL)
         {
             if (dState == ClockSetup)
             {
@@ -642,7 +643,7 @@ int main()
             else
                 dState = ClockSetup;
         } // key A
-        if (pressed == Key_B)
+        if (pressed == Key_BL)
         {
             if (dState == ClockSetup)
             {
@@ -650,7 +651,7 @@ int main()
                     sState = Hours;
             }
         }
-        if (pressed == Key_X)
+        if (pressed == Key_XL)
         {
             if (dState == ClockSetup)
             {
@@ -696,7 +697,7 @@ int main()
                 }
             }
         }
-        if (pressed == Key_Y)
+        if (pressed == Key_YL)
         {
             if (dState == ClockSetup)
             {
@@ -751,7 +752,7 @@ int main()
         }
         if (oldsk != scheduler)
         {
-            pico_display.set_pen(120, 40, 60);
+            pico_display.set_pen(0, 0, 100); // Dark Blue
             pico_display.clear();
 
             for (auto &shape : shapes)
@@ -914,7 +915,9 @@ int main()
                 pico_display.set_pen(0, 255, 0); // green
                 myPrintLowFont(Point(100, 200), "Setup");
             }
-            // pico_display.text(mainString, mainS_location, 320);
+
+            pico_display.set_pen(255, 0, 0); // Red
+            pico_display.text(mainString, mainS_location, 320);
 
             // pico_display.line(scrolling_line_b, scrolling_line_e);
 
