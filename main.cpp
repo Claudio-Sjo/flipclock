@@ -10,13 +10,28 @@
 #include "fonts/lowfontgen.h"
 #include "pico_display_2.hpp"
 
-#define BUTTONS 4   // only 4 buttons on the pico display
+#define BUTTONS 4 // only 4 buttons on the pico display
+
+#define MAXQUEUE 32
+#define CLICKDEBOUNCE 30   /* 30ms for debouncing   */
+#define CLICKLONG     1000 /* 1s for long click     */
+#define CLICKSHORT    75   /* 75ms for short click */
+
+static volatile uint16_t keyWrite  = 0;
+static volatile uint16_t keyRead   = 0;
+static volatile uint16_t keysReady = 0;
 typedef enum
 {
     NoKey = 0x80,
     // only <128 from UART
-    ShortClick,
-    LongClick
+    Key_A,
+    Key_AL,
+    Key_B,
+    Key_BL,
+    Key_X,
+    Key_XL,
+    Key_Y,
+    Key_YL
 } Key;
 
 typedef enum
@@ -37,57 +52,45 @@ typedef struct
     Key      kLong;  /* key for long press */
 } Button;
 
+Key inputRing[MAXQUEUE];
+
 using namespace pimoroni;
 
 uint16_t     buffer[PicoDisplay2::WIDTH * PicoDisplay2::HEIGHT];
 PicoDisplay2 pico_display(buffer);
 
-Button keyA =
+Button buttons[BUTTONS] =
     {
-        pico_display.A,
-        true,
-        Idle,
-        0,
-        ShortClick,
-        LongClick};
 
-Button keyB =
-    {
-        pico_display.B,
-        true,
-        Idle,
-        0,
-        ShortClick,
-        LongClick};
+        {.button = pico_display.A,
+         .pol    = true,
+         .state  = Idle,
+         .tick   = 0,
+         .kShort = Key_A,
+         .kLong  = Key_AL},
 
-Button keyX =
-    {
-        pico_display.X,
-        true,
-        Idle,
-        0,
-        ShortClick,
-        LongClick};
+        {.button = pico_display.B,
+         .pol    = true,
+         .state  = Idle,
+         .tick   = 0,
+         .kShort = Key_B,
+         .kLong  = Key_BL},
 
-Button keyY =
-    {
-        pico_display.Y,
-        true,
-        Idle,
-        0,
-        ShortClick,
-        LongClick};
+        {.button = pico_display.X,
+         .pol    = true,
+         .state  = Idle,
+         .tick   = 0,
+         .kShort = Key_X,
+         .kLong  = Key_XL},
 
-Button *buttons[] = 
-{
-    keyA,
-    keyB,
-    KeyX,
-    keyY
-}
+        {.button = pico_display.Y,
+         .pol    = true,
+         .state  = Idle,
+         .tick   = 0,
+         .kShort = Key_Y,
+         .kLong  = Key_YL}};
 
-static uint8_t curBtn = 0;
-
+static uint_fast16_t curBtn = 0;
 
 // We need a state machine for properly handling the display
 enum displayState
@@ -460,7 +463,7 @@ void updateHour(uint8_t hh, uint8_t mm, uint8_t ss)
 Key serveButton(Button *b)
 {
     Key      key = NoKey;
-    uint32_t now = GetTick();
+    uint32_t now = time_us_32();
     bool     btn = b->pol == pico_display.is_pressed(b->button);
     switch (b->state)
     {
@@ -616,14 +619,16 @@ int main()
 
     sprintf(mainString, "********");
 
-// Debouncing Timer
+    // Debouncing Timer
     add_repeating_timer_ms(2, oneTwenthCallback, NULL, &debounceTimer);
 
     add_repeating_timer_ms(50, oneTwenthCallback, NULL, &oneTwenthtimer);
 
     while (true)
     {
-        if (pico_display.is_pressed(pico_display.A))
+        Key pressed = ReadInput();
+
+        if (pressed == Key_A)
         {
             if (dState == ClockSetup)
             {
@@ -633,7 +638,7 @@ int main()
             else
                 dState = ClockSetup;
         } // key A
-        if (pico_display.is_pressed(pico_display.B))
+        if (pressed == Key_B)
         {
             if (dState == ClockSetup)
             {
@@ -641,7 +646,7 @@ int main()
                     sState = Hours;
             }
         }
-        if (pico_display.is_pressed(pico_display.X))
+        if (pressed == Key_X)
         {
             if (dState == ClockSetup)
             {
@@ -687,7 +692,7 @@ int main()
                 }
             }
         }
-        if (pico_display.is_pressed(pico_display.Y))
+        if (pressed == Key_Y)
         {
             if (dState == ClockSetup)
             {
