@@ -16,9 +16,9 @@ critical_section_t debounce_section;
 #define BUTTONS 4 // only 4 buttons on the pico display
 
 #define MAXQUEUE 32
-#define CLICKDEBOUNCE 30   /* 30ms for debouncing   */
-#define CLICKLONG     1000 /* 1s for long click     */
-#define CLICKSHORT    75   /* 75ms for short click */
+#define CLICKDEBOUNCE 30000   /* 30ms for debouncing   */
+#define CLICKLONG     1000000 /* 1s for long click     */
+#define CLICKSHORT    75000   /* 75ms for short click */
 
 static volatile uint16_t keyWrite  = 0;
 static volatile uint16_t keyRead   = 0;
@@ -633,7 +633,7 @@ int main()
     {
         Key pressed = ReadInput();
 
-        if (pressed == Key_AL)
+        if (pressed == Key_A)
         {
             if (dState == ClockSetup)
             {
@@ -643,7 +643,7 @@ int main()
             else
                 dState = ClockSetup;
         } // key A
-        if (pressed == Key_BL)
+        if (pressed == Key_B)
         {
             if (dState == ClockSetup)
             {
@@ -651,7 +651,7 @@ int main()
                     sState = Hours;
             }
         }
-        if (pressed == Key_XL)
+        if (pressed == Key_X)
         {
             if (dState == ClockSetup)
             {
@@ -697,7 +697,7 @@ int main()
                 }
             }
         }
-        if (pressed == Key_YL)
+        if (pressed == Key_Y)
         {
             if (dState == ClockSetup)
             {
