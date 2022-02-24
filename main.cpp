@@ -1,4 +1,5 @@
 #include "main.hpp"
+#include "clock.hpp"
 #include "fonts/bitmap_db.h"
 #include "fonts/clockFonts.h"
 #include "fonts/lowfontgen.h"
@@ -19,8 +20,8 @@ static volatile uint16_t keysReady = 0;
 
 using namespace pimoroni;
 
-uint16_t     buffer[PicoDisplay2::WIDTH * PicoDisplay2::HEIGHT];
-PicoDisplay2 pico_display(buffer);
+extern uint16_t     buffer[];
+extern PicoDisplay2 pico_display();
 
 bgEnum background = Stars;
 
@@ -39,14 +40,6 @@ int w2dwn;
 
 // Main string for messages
 char mainString[64];
-
-volatile uint8_t  hours   = 0;
-volatile uint8_t  min     = 0;
-volatile uint8_t  sec     = 0;
-volatile uint8_t  day     = 1;
-volatile uint8_t  dayweek = Monday;
-volatile uint8_t  month   = January;
-volatile uint16_t year    = 2022;
 
 volatile uint8_t scheduler = 0;
 
@@ -122,226 +115,6 @@ void from_hsv(float h, float s, float v, uint8_t &r, uint8_t &g, uint8_t &b)
         g = p;
         b = q;
         break;
-    }
-}
-
-void myPrintLowFont(Point location, const std::string str)
-{
-    int x = location.x;
-    int y = location.y;
-    int ix;
-    int cx      = 0;
-    int cy      = 0;
-    int charpos = 0;
-
-    if (str.size() > 20)
-        return;
-
-    for (ix = 0; ix < str.size(); ix++)
-    {
-        // Search for the char
-        int chidx    = str[ix];
-        chidx        = chidx - forte_24ptFontInfo.startChar;
-        int chsize   = forte_24ptDescriptors[chidx].widthBits;
-        int choffset = forte_24ptDescriptors[chidx].offset;
-        int chheigth = forte_24ptDescriptors[chidx].heightBits;
-
-        if (chsize != 0)
-        {
-            for (int hh = 0; hh < chheigth; hh++)
-            {
-                int byteOfs = (hh * ((chsize + 7) / 8));
-
-                for (int chlen = 0; chlen < chsize; chlen++)
-                {
-                    int pbyte   = forte_24ptBitmaps[byteOfs + choffset + (chlen / 8)];
-                    int chshift = chlen % 8;
-                    if ((pbyte << chshift) & 0x80)
-                        pico_display.pixel(Point(x + cx, y + cy));
-                    cx++;
-                }
-                cx = charpos;
-                cy++;
-            }
-        }
-        charpos += chsize + 2;
-        cx = charpos;
-        cy = 0;
-    }
-}
-
-void myPrintLine(Point start, Point end, int r, int g, int b)
-{
-    Point s = start;
-    Point e = end;
-
-    int len       = end.x - start.x;
-    int len_a     = abs(len);
-    int direction = (len > 0) ? 1 : -1;
-
-    pico_display.set_pen(r, g, b); // Black
-
-    if (len_a < 3)
-    {
-        pico_display.line(start, end);
-    }
-    else
-    {
-        s.x = s.x + 1 * direction;
-        e.x = e.x - 1 * direction;
-        pico_display.line(s, e);
-
-        if (len_a >= 4)
-        {
-            pico_display.set_pen(r, g, b); // White
-            s.x = s.x + 1 * direction;
-            e.x = e.x - 1 * direction;
-            pico_display.line(s, e);
-        }
-        else
-        {
-            pico_display.set_pen(r, g, b); // White
-            s   = start;
-            s.x = s.x + 1 * direction;
-            pico_display.line(s, s);
-        }
-    }
-}
-
-void printDigit(Point location, uint8_t digit, int r, int g, int b)
-{
-    int base = digit * 64 * 4;
-
-    Point start = location;
-    Point end   = location;
-
-    for (int i = 0; i < 64; i++)
-    {
-        int ix  = 4 * i;
-        start.x = location.x + digitFont[base + ix];
-        end.x   = location.x + digitFont[base + ix + 1];
-        myPrintLine(start, end, r, g, b);
-        if (digitFont[base + ix] != digitFont[base + ix + 2])
-        {
-            start.x = location.x + digitFont[base + ix + 2];
-            end.x   = location.x + digitFont[base + ix + 3];
-            myPrintLine(start, end, r, g, b);
-        }
-        start.y = start.y + 1;
-        end.y   = end.y + 1;
-    }
-}
-
-void mergeDigitPrint(Point location, uint8_t before, uint8_t after, uint8_t sk, int r, int g, int b)
-{
-    int baseBe = before * 64 * 4;
-    int baseAf = after * 64 * 4;
-
-    Point start = location;
-    Point end   = location;
-
-    for (int i = 0; i < 64; i++)
-    {
-        int ix     = 4 * i;
-        int step   = (digitFont[baseAf + ix] - digitFont[baseBe + ix]);
-        int offset = (step * sk) / 10;
-        start.x    = location.x + digitFont[baseBe + ix] + offset;
-        step       = (digitFont[baseAf + ix + 1] - digitFont[baseBe + ix + 1]);
-        offset     = (step * sk) / 10;
-        end.x      = location.x + digitFont[baseBe + ix + 1] + offset;
-        myPrintLine(start, end, r, g, b);
-        step    = (digitFont[baseAf + ix + 2] - digitFont[baseBe + ix + 2]);
-        offset  = (step * sk) / 10;
-        start.x = location.x + digitFont[baseBe + ix + 2] + offset;
-        step    = (digitFont[baseAf + ix + 3] - digitFont[baseBe + ix + 3]);
-        offset  = (step * sk) / 10;
-        end.x   = location.x + digitFont[baseBe + ix + 3] + offset;
-        myPrintLine(start, end, r, g, b);
-        start.y = start.y + 1;
-        end.y   = end.y + 1;
-    }
-}
-
-void updateHour(uint8_t hh, uint8_t mm, uint8_t ss)
-{
-    static uint8_t oldhh, oldmm, oldss;
-    Point          digitPoint(5, 20);
-    int            r, g, b;
-
-    if ((dState == ClockSetup) && (sState == Hours))
-    {
-        r = 0;
-        g = 255;
-        b = 0;
-    }
-    else
-        r = g = b = 255;
-
-    if (oldhh != hh)
-    {
-        if ((oldhh / 10) != (hh / 10))
-            mergeDigitPrint(digitPoint, oldhh / 10, hh / 10, scheduler, r, g, b);
-        else
-            printDigit(digitPoint, hours / 10, r, g, b);
-        digitPoint.x = 50;
-        mergeDigitPrint(digitPoint, oldhh % 10, hh % 10, scheduler, r, g, b);
-        if (scheduler > 10)
-            oldhh = hh;
-    }
-    else
-    {
-        printDigit(digitPoint, hours / 10, r, g, b);
-        digitPoint.x = 50;
-        printDigit(digitPoint, hours % 10, r, g, b);
-    }
-
-    if ((dState == ClockSetup) && (sState == Minutes))
-    {
-        r = 0;
-        g = 255;
-        b = 0;
-    }
-    else
-        r = g = b = 255;
-
-    digitPoint.x = 115;
-    if (oldmm != mm)
-    {
-        if ((oldmm / 10) != (mm / 10))
-            mergeDigitPrint(digitPoint, oldmm / 10, mm / 10, scheduler, r, g, b);
-        else
-            printDigit(digitPoint, min / 10, r, g, b);
-        digitPoint.x = 160;
-        mergeDigitPrint(digitPoint, oldmm % 10, mm % 10, scheduler, r, g, b);
-        if (scheduler > 10)
-            oldmm = mm;
-    }
-    else
-    {
-        printDigit(digitPoint, min / 10, r, g, b);
-        digitPoint.x = 160;
-        printDigit(digitPoint, min % 10, r, g, b);
-    }
-
-    r = g = b = 255;
-
-    digitPoint.x = 225;
-    if (oldss != ss)
-    {
-        if ((oldss / 10) != (ss / 10))
-            mergeDigitPrint(digitPoint, oldss / 10, ss / 10, scheduler, r, g, b);
-        else
-            printDigit(digitPoint, sec / 10, r, g, b);
-        digitPoint.x = 270;
-        mergeDigitPrint(digitPoint, oldss % 10, ss % 10, scheduler, r, g, b);
-        if (scheduler > 10)
-            oldss = ss;
-    }
-    else
-    {
-        printDigit(digitPoint, sec / 10, r, g, b);
-        digitPoint.x = 270;
-        printDigit(digitPoint, sec % 10, r, g, b);
     }
 }
 

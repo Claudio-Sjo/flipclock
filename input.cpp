@@ -12,7 +12,7 @@
 
 using namespace pimoroni;
 
-extern pico_display(buffer);
+extern PicoDisplay2 pico_display(buffer);
 
 Key inputRing[MAXQUEUE];
 
