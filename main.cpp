@@ -715,7 +715,6 @@ int main()
                     {
                         shape.x = 5;
                     }
-0
 
                     pico_display.set_pen(255,255,0); // Shining yellow
                     pico_display.line(Point(shape.x - 5, shape.y), Point(shape.x + 5, shape.y));
