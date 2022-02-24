@@ -24,7 +24,7 @@ using namespace pimoroni;
 uint16_t     buffer[PicoDisplay2::WIDTH * PicoDisplay2::HEIGHT];
 PicoDisplay2 pico_display(buffer);
 
-bgEnum background = Balloons;
+bgEnum background = Stars;
 
 Button buttons[BUTTONS] =
     {
@@ -706,7 +706,7 @@ int main()
                 }
                 if (background == Stars)
                 {
-                    pico_display.set_pen(0,255,255); // Shining yellow
+                    pico_display.set_pen(255,255,0); // Shining yellow
                     pico_display.line(Point(shape.x - 5, shape.y), Point(shape.x + 5, shape.y));
                     pico_display.line(Point(shape.x, shape.y - 5), Point(shape.x, shape.y + 5));
                     pico_display.line(Point(shape.x - 3, shape.y - 3), Point(shape.x + 3, shape.y +3));

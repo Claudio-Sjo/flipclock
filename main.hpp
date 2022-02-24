@@ -1,3 +1,11 @@
+#ifndef MAIN_HPP_HEADERFILE
+#define MAIN_HPP_HEADERFILE
+
+#include <cstdlib>
+#include <math.h>
+#include <stdio.h>
+#include <string.h>
+#include <vector>
 
 #define BUTTONS 4 // only 4 buttons on the pico display
 
@@ -83,8 +91,10 @@ enum monthOfYear
     December
 };
 
-enum backGround
+typedef enum backGround
 {
     Balloons,
     Stars
 } bgEnum;
+
+#endif
