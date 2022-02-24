@@ -706,6 +706,17 @@ int main()
                 }
                 if (background == Stars)
                 {
+
+                    // Let's slowly move the stars from right to left
+                    shape.x += 6 /360000.0 ;
+                    
+
+                    if ((shape.x + 5) >= (pico_display.bounds.w))
+                    {
+                        shape.x = 5;
+                    }
+0
+
                     pico_display.set_pen(255,255,0); // Shining yellow
                     pico_display.line(Point(shape.x - 5, shape.y), Point(shape.x + 5, shape.y));
                     pico_display.line(Point(shape.x, shape.y - 5), Point(shape.x, shape.y + 5));
@@ -720,9 +731,12 @@ int main()
             // Since HSV takes a float from 0.0 to 1.0 indicating hue,
             // then we can divide millis by the number of milliseconds
             // we want a full colour cycle to take. 5000 = 5 sec.
+            /*
             uint8_t r = 0, g = 0, b = 0;
             from_hsv((float)millis() / 5000.0f, 1.0f, 0.5f + sinf(millis() / 100.0f / 3.14159f) * 0.5f, r, g, b);
             pico_display.set_led(r, g, b);
+            */
+
 
             switch (day)
             {
