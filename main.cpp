@@ -1,59 +1,21 @@
-#include "pico/stdlib.h"
+#include "main.hpp"
+#include "fonts/bitmap_db.h"
+#include "fonts/clockFonts.h"
+#include "fonts/lowfontgen.h"
 #include "pico/critical_section.h"
+#include "pico/stdlib.h"
+#include "pico_display_2.hpp"
 #include <cstdlib>
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
 #include <vector>
 
-#include "fonts/bitmap_db.h"
-#include "fonts/clockFonts.h"
-#include "fonts/lowfontgen.h"
-#include "pico_display_2.hpp"
-
 critical_section_t debounce_section;
-
-#define BUTTONS 4 // only 4 buttons on the pico display
-
-#define MAXQUEUE 32
-#define CLICKDEBOUNCE 30000   /* 30ms for debouncing   */
-#define CLICKLONG     1000000 /* 1s for long click     */
-#define CLICKSHORT    75000   /* 75ms for short click */
 
 static volatile uint16_t keyWrite  = 0;
 static volatile uint16_t keyRead   = 0;
 static volatile uint16_t keysReady = 0;
-typedef enum
-{
-    NoKey = 0x80,
-    // only <128 from UART
-    Key_A,
-    Key_AL,
-    Key_B,
-    Key_BL,
-    Key_X,
-    Key_XL,
-    Key_Y,
-    Key_YL
-} Key;
-
-typedef enum
-{
-    Idle,
-    Debouncing,
-    Pressed,
-    Waiting
-} BtnState;
-
-typedef struct
-{
-    uint8_t  button; /* GPIO pin */
-    bool     pol;    /* polarity: SET active high, RESET active low */
-    BtnState state;  /* current state */
-    uint32_t tick;   /* time of press */
-    Key      kShort; /* key for short press */
-    Key      kLong;  /* key for long press */
-} Button;
 
 Key inputRing[MAXQUEUE];
 
@@ -61,6 +23,8 @@ using namespace pimoroni;
 
 uint16_t     buffer[PicoDisplay2::WIDTH * PicoDisplay2::HEIGHT];
 PicoDisplay2 pico_display(buffer);
+
+bgEnum background = Balloons;
 
 Button buttons[BUTTONS] =
     {
@@ -94,51 +58,6 @@ Button buttons[BUTTONS] =
          .kLong  = Key_YL}};
 
 static uint_fast16_t curBtn = 0;
-
-// We need a state machine for properly handling the display
-enum displayState
-{
-    Clock,
-    ClockSetup,
-    DateSetup,
-    AlarmSetup,
-};
-
-enum setupState
-{
-    Hours,
-    Minutes,
-    Day,
-    Month,
-    Year
-};
-
-enum dayOfWeek
-{
-    Monday,
-    Tuesday,
-    Wednesday,
-    Thursday,
-    Friday,
-    Saturday,
-    Sunday
-};
-
-enum monthOfYear
-{
-    January,
-    February,
-    March,
-    April,
-    May,
-    June,
-    July,
-    August,
-    September,
-    October,
-    November,
-    December
-};
 
 // displayState dState = Clock;
 // setupState   sState = Hours;
@@ -260,7 +179,7 @@ void myPrintLowFont(Point location, const std::string str)
         chidx        = chidx - forte_24ptFontInfo.startChar;
         int chsize   = forte_24ptDescriptors[chidx].widthBits;
         int choffset = forte_24ptDescriptors[chidx].offset;
-        int chheigth = forte_24ptDescriptors[chidx].heightBytes;
+        int chheigth = forte_24ptDescriptors[chidx].heightBits;
 
         if (chsize != 0)
         {
@@ -545,7 +464,7 @@ void queueKey(Key key)
     if (key == NoKey)
         return;
     // valid char received, enqueue it!
-    sprintf(mainString,"valid key : %d", key);
+    sprintf(mainString, "valid key : %d", key);
     critical_section_enter_blocking(&debounce_section);
     /* Space left on input ring? */
     if (keysReady < MAXQUEUE)
@@ -603,9 +522,9 @@ int main()
     w2dwn = pico_display.bounds.h;
 
 // It was 100 baloons, but for half screen we change to 50
-#define BALOONS 0
+#define OBJECTS 50
     std::vector<pt> shapes;
-    for (int i = 0; i < BALOONS; i++)
+    for (int i = 0; i < OBJECTS; i++)
     {
         pt shape;
         shape.x   = rand() % (pico_display.bounds.w);
@@ -757,31 +676,43 @@ int main()
 
             for (auto &shape : shapes)
             {
-                shape.x += shape.dx;
-                shape.y += shape.dy;
-                if ((shape.x - shape.r) < 0)
+                if (background == Balloons)
                 {
-                    shape.dx *= -1;
-                    shape.x = shape.r;
-                }
-                if ((shape.x + shape.r) >= (pico_display.bounds.w))
-                {
-                    shape.dx *= -1;
-                    shape.x = pico_display.bounds.w - shape.r;
-                }
-                if ((shape.y - shape.r) < 0)
-                {
-                    shape.dy *= -1;
-                    shape.y = shape.r;
-                }
-                if ((shape.y + shape.r) >= w1dwn)
-                {
-                    shape.dy *= -1;
-                    shape.y = w1dwn - shape.r;
-                }
+                    shape.x += shape.dx;
+                    shape.y += shape.dy;
+                    if ((shape.x - shape.r) < 0)
+                    {
+                        shape.dx *= -1;
+                        shape.x = shape.r;
+                    }
+                    if ((shape.x + shape.r) >= (pico_display.bounds.w))
+                    {
+                        shape.dx *= -1;
+                        shape.x = pico_display.bounds.w - shape.r;
+                    }
+                    if ((shape.y - shape.r) < 0)
+                    {
+                        shape.dy *= -1;
+                        shape.y = shape.r;
+                    }
+                    if ((shape.y + shape.r) >= w1dwn)
+                    {
+                        shape.dy *= -1;
+                        shape.y = w1dwn - shape.r;
+                    }
 
-                pico_display.set_pen(shape.pen);
-                pico_display.circle(Point(shape.x, shape.y), shape.r);
+                    pico_display.set_pen(shape.pen);
+                    pico_display.circle(Point(shape.x, shape.y), shape.r);
+                }
+                if (background == Stars)
+                {
+                    pico_display.set_pen(0,255,255); // Shining yellow
+                    pico_display.line(Point(shape.x - 5, shape.y), Point(shape.x + 5, shape.y));
+                    pico_display.line(Point(shape.x, shape.y - 5), Point(shape.x, shape.y + 5));
+                    pico_display.line(Point(shape.x - 3, shape.y - 3), Point(shape.x + 3, shape.y +3));
+                    pico_display.line(Point(shape.x - 3, shape.y + 3), Point(shape.x + 3, shape.y - 3));
+                    pico_display.circle(Point(shape.x, shape.y), 2);
+                }
             }
 
             updateHour(hours, min, sec);
@@ -792,14 +723,6 @@ int main()
             uint8_t r = 0, g = 0, b = 0;
             from_hsv((float)millis() / 5000.0f, 1.0f, 0.5f + sinf(millis() / 100.0f / 3.14159f) * 0.5f, r, g, b);
             pico_display.set_led(r, g, b);
-
-            // Preparing strings for printing data
-            /*
-    char dayStr[5];
-    char montStr[12];
-    char dowStr[12];
-    char yearStr[5];
-    */
 
             switch (day)
             {
@@ -891,23 +814,23 @@ int main()
             if ((dState == ClockSetup) && (sState == Day))
                 pico_display.set_pen(0, 255, 0);
             else
-                pico_display.set_pen(255, 255, 255); // pico_display.text("Hello World", text_location, 320);
+                pico_display.set_pen(255, 255, 255);
             myPrintLowFont(Point(5, 120), dayStr);
 
             if ((dState == ClockSetup) && (sState == Month))
                 pico_display.set_pen(0, 255, 0);
             else
-                pico_display.set_pen(255, 255, 255); // pico_display.text("Hello World", text_location, 320);
+                pico_display.set_pen(255, 255, 255);
             myPrintLowFont(Point(160, 120), montStr);
             if (dayweek == Sunday)
                 pico_display.set_pen(255, 0, 0); // Red
             else
-                pico_display.set_pen(255, 255, 255); // pico_display.text("Hello World", text_location, 320);
+                pico_display.set_pen(255, 255, 255);
             myPrintLowFont(Point(5, 160), dowStr);
             if ((dState == ClockSetup) && (sState == Year))
                 pico_display.set_pen(0, 255, 0);
             else
-                pico_display.set_pen(255, 255, 255); // pico_display.text("Hello World", text_location, 320);
+                pico_display.set_pen(255, 255, 255);
             myPrintLowFont(Point(160, 160), yearStr);
 
             if (dState == ClockSetup)
