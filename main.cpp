@@ -2,7 +2,7 @@
 #include "fonts/bitmap_db.h"
 #include "fonts/clockFonts.h"
 #include "fonts/lowfontgen.h"
-#include "pico/critical_section.h"
+#include "input.hpp"
 #include "pico/stdlib.h"
 #include "pico_display_2.hpp"
 #include <cstdlib>
@@ -17,47 +17,12 @@ static volatile uint16_t keyWrite  = 0;
 static volatile uint16_t keyRead   = 0;
 static volatile uint16_t keysReady = 0;
 
-Key inputRing[MAXQUEUE];
-
 using namespace pimoroni;
 
 uint16_t     buffer[PicoDisplay2::WIDTH * PicoDisplay2::HEIGHT];
 PicoDisplay2 pico_display(buffer);
 
 bgEnum background = Stars;
-
-Button buttons[BUTTONS] =
-    {
-
-        {.button = pico_display.A,
-         .pol    = true,
-         .state  = Idle,
-         .tick   = 0,
-         .kShort = Key_A,
-         .kLong  = Key_AL},
-
-        {.button = pico_display.B,
-         .pol    = true,
-         .state  = Idle,
-         .tick   = 0,
-         .kShort = Key_B,
-         .kLong  = Key_BL},
-
-        {.button = pico_display.X,
-         .pol    = true,
-         .state  = Idle,
-         .tick   = 0,
-         .kShort = Key_X,
-         .kLong  = Key_XL},
-
-        {.button = pico_display.Y,
-         .pol    = true,
-         .state  = Idle,
-         .tick   = 0,
-         .kShort = Key_Y,
-         .kLong  = Key_YL}};
-
-static uint_fast16_t curBtn = 0;
 
 // displayState dState = Clock;
 // setupState   sState = Hours;
@@ -380,113 +345,6 @@ void updateHour(uint8_t hh, uint8_t mm, uint8_t ss)
     }
 }
 
-// Debouncing mechanism by Zuk
-
-Key serveButton(Button *b)
-{
-    Key      key = NoKey;
-    uint32_t now = time_us_32();
-    bool     btn = b->pol == pico_display.is_pressed(b->button);
-    switch (b->state)
-    {
-    case Idle:
-        if (btn)
-        {
-            /* The button has been depressed */
-            /* Remember when */
-            b->tick = now;
-            /* and move to Debouncing state */
-            b->state = Debouncing;
-        }
-        break;
-    case Debouncing:
-        if (btn)
-        {
-            if (now - b->tick > CLICKDEBOUNCE)
-                /* Real press */
-                b->state = Pressed;
-        }
-        else
-        {
-            /* It was a bounce, start over */
-            b->state = Idle;
-        }
-        break;
-    case Pressed:
-        if (btn)
-        { /* Still pressed, is this a long press? */
-            if (now - b->tick > CLICKLONG)
-            {
-                /* A long press has been detected */
-                key = b->kLong;
-                /* Wait for release */
-                b->state = Waiting;
-            }
-        }
-        else
-        { /* Released, is it a short press? */
-            if (now - b->tick > CLICKSHORT)
-            {
-                /* A short press has been detected */
-                key = b->kShort;
-            }
-            /* Return to idle */
-            b->state = Idle;
-        }
-        break;
-    case Waiting:
-        if (!btn)
-        {
-            b->state = Idle;
-        }
-        break;
-    }
-    return key;
-}
-
-Key ReadInput(void)
-{
-    Key key = NoKey;
-    if (keysReady)
-    {
-        /* Read oldest key and move pointer */
-        key = inputRing[keyRead++];
-        /* Normalize to ring size */
-        keyRead %= MAXQUEUE;
-        /* Make slot available */
-        keysReady--;
-    }
-    return key;
-}
-
-void queueKey(Key key)
-{
-    if (key == NoKey)
-        return;
-    // valid char received, enqueue it!
-    sprintf(mainString, "valid key : %d", key);
-    critical_section_enter_blocking(&debounce_section);
-    /* Space left on input ring? */
-    if (keysReady < MAXQUEUE)
-    {
-        inputRing[keyWrite++] = key;
-        keyWrite %= MAXQUEUE; // pointer wrap around
-        keysReady++;
-    }
-    critical_section_exit(&debounce_section);
-}
-
-bool Debounce(struct repeating_timer *t)
-{
-    Key key = serveButton(&buttons[curBtn]);
-    if (++curBtn == BUTTONS)
-        curBtn = 0;
-    /* Did we find anything to do? */
-    queueKey(key);
-
-    return true;
-}
-
 int main()
 {
 
@@ -708,18 +566,17 @@ int main()
                 {
 
                     // Let's slowly move the stars from right to left
-                    shape.x += 6 /360000.0 ;
-                    
+                    shape.x += 6 / 360000.0;
 
                     if ((shape.x + 5) >= (pico_display.bounds.w))
                     {
                         shape.x = 5;
                     }
 
-                    pico_display.set_pen(255,255,0); // Shining yellow
+                    pico_display.set_pen(255, 255, 0); // Shining yellow
                     pico_display.line(Point(shape.x - 5, shape.y), Point(shape.x + 5, shape.y));
                     pico_display.line(Point(shape.x, shape.y - 5), Point(shape.x, shape.y + 5));
-                    pico_display.line(Point(shape.x - 3, shape.y - 3), Point(shape.x + 3, shape.y +3));
+                    pico_display.line(Point(shape.x - 3, shape.y - 3), Point(shape.x + 3, shape.y + 3));
                     pico_display.line(Point(shape.x - 3, shape.y + 3), Point(shape.x + 3, shape.y - 3));
                     pico_display.circle(Point(shape.x, shape.y), 2);
                 }
@@ -735,7 +592,6 @@ int main()
             from_hsv((float)millis() / 5000.0f, 1.0f, 0.5f + sinf(millis() / 100.0f / 3.14159f) * 0.5f, r, g, b);
             pico_display.set_led(r, g, b);
             */
-
 
             switch (day)
             {
