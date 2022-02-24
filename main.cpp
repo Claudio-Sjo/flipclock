@@ -4,8 +4,10 @@
 #include "fonts/clockFonts.h"
 #include "fonts/lowfontgen.h"
 #include "input.hpp"
+#include "output.hpp"
 #include "pico/stdlib.h"
 #include "pico_display_2.hpp"
+#include "ui.hpp"
 #include <cstdlib>
 #include <math.h>
 #include <stdio.h>
@@ -72,52 +74,6 @@ bool oneTwenthCallback(struct repeating_timer *t)
     return true;
 }
 
-// HSV Conversion expects float inputs in the range of 0.00-1.00 for each channel
-// Outputs are rgb in the range 0-255 for each channel
-void from_hsv(float h, float s, float v, uint8_t &r, uint8_t &g, uint8_t &b)
-{
-    float i = floor(h * 6.0f);
-    float f = h * 6.0f - i;
-    v *= 255.0f;
-    uint8_t p = v * (1.0f - s);
-    uint8_t q = v * (1.0f - f * s);
-    uint8_t t = v * (1.0f - (1.0f - f) * s);
-
-    switch (int(i) % 6)
-    {
-    case 0:
-        r = v;
-        g = t;
-        b = p;
-        break;
-    case 1:
-        r = q;
-        g = v;
-        b = p;
-        break;
-    case 2:
-        r = p;
-        g = v;
-        b = t;
-        break;
-    case 3:
-        r = p;
-        g = q;
-        b = v;
-        break;
-    case 4:
-        r = t;
-        g = p;
-        b = v;
-        break;
-    case 5:
-        r = v;
-        g = p;
-        b = q;
-        break;
-    }
-}
-
 int main()
 {
 
@@ -181,125 +137,8 @@ int main()
 
     while (true)
     {
-        Key pressed = ReadInput();
+        menuHandler(ReadInput());
 
-        if (pressed == Key_A)
-        {
-            if (dState == ClockSetup)
-            {
-                dState = Clock;
-                sState = Hours;
-            }
-            else
-                dState = ClockSetup;
-        } // key A
-        if (pressed == Key_B)
-        {
-            if (dState == ClockSetup)
-            {
-                if (++sState > Year)
-                    sState = Hours;
-            }
-        }
-        if (pressed == Key_X)
-        {
-            if (dState == ClockSetup)
-            {
-                int maxday = 31;
-
-                switch (sState)
-                {
-                case Hours:
-                    if (++hours > 23)
-                        hours = 0;
-                    break;
-                case Minutes:
-                    if (++min > 59)
-                        min = 0;
-                    break;
-                case Day:
-                {
-                    switch (month)
-                    {
-                    case November:
-                    case April:
-                    case June:
-                    case September:
-                        maxday = 30;
-                        break;
-                    case February:
-                        maxday = (year % 4) ? 28 : 29;
-                        break;
-                    }
-                    if (++day > maxday)
-                        day = 1;
-                    dayweek = (day - 1) % 7;
-                }
-                break;
-                case Month:
-                    if (++month > December)
-                        month = January;
-                    break;
-                case Year:
-                    if (year > 2100)
-                        year = 2022;
-                    break;
-                }
-            }
-        }
-        if (pressed == Key_Y)
-        {
-            if (dState == ClockSetup)
-            {
-                int maxday = 31;
-
-                switch (sState)
-                {
-                case Hours:
-                    if (hours == 0)
-                        hours = 0;
-                    else
-                        hours--;
-                    break;
-                case Minutes:
-                    if (min == 0)
-                        min = 59;
-                    else
-                        min--;
-                    break;
-                case Day:
-                    switch (month)
-                    {
-                    case November:
-                    case April:
-                    case June:
-                    case September:
-                        maxday = 30;
-                        break;
-                    case February:
-                        maxday = (year % 4) ? 28 : 29;
-                        break;
-                    }
-                    if (day == 0)
-                        day = maxday;
-                    else
-                        day--;
-                    break;
-                case Month:
-                    if (month == January)
-                        month = December;
-                    else
-                        month--;
-                    break;
-                case Year:
-                    if (year == 2022)
-                        year = 2100;
-                    else
-                        year--;
-                    break;
-                }
-            }
-        }
         if (oldsk != scheduler)
         {
             pico_display.set_pen(0, 0, 100); // Dark Blue
@@ -366,120 +205,7 @@ int main()
             pico_display.set_led(r, g, b);
             */
 
-            switch (day)
-            {
-            case 1:
-            case 21:
-            case 31:
-                sprintf(dayStr, "%dst", day);
-                break;
-            case 2:
-            case 22:
-                sprintf(dayStr, "%dnd", day);
-                break;
-            case 3:
-            case 23:
-                sprintf(dayStr, "%drd", day);
-                break;
-            default:
-                sprintf(dayStr, "%dth", day);
-                break;
-            }
-
-            switch (month)
-            {
-            case January:
-                sprintf(montStr, "January");
-                break;
-            case February:
-                sprintf(montStr, "February");
-                break;
-            case March:
-                sprintf(montStr, "March");
-                break;
-            case April:
-                sprintf(montStr, "April");
-                break;
-            case May:
-                sprintf(montStr, "May");
-                break;
-            case June:
-                sprintf(montStr, "June");
-                break;
-            case July:
-                sprintf(montStr, "July");
-                break;
-            case August:
-                sprintf(montStr, "August");
-                break;
-            case September:
-                sprintf(montStr, "September");
-                break;
-            case October:
-                sprintf(montStr, "October");
-                break;
-            case November:
-                sprintf(montStr, "November");
-                break;
-            case December:
-                sprintf(montStr, "December");
-                break;
-            }
-
-            switch (dayweek)
-            {
-            case Monday:
-                sprintf(dowStr, "Monday");
-                break;
-            case Tuesday:
-                sprintf(dowStr, "Tuesday");
-                break;
-            case Wednesday:
-                sprintf(dowStr, "Wednesday");
-                break;
-            case Thursday:
-                sprintf(dowStr, "Thursday");
-                break;
-            case Friday:
-                sprintf(dowStr, "Friday");
-                break;
-            case Saturday:
-                sprintf(dowStr, "Saturday");
-                break;
-            case Sunday:
-                sprintf(dowStr, "Sunday");
-                break;
-            }
-
-            sprintf(yearStr, "%d", year);
-
-            if ((dState == ClockSetup) && (sState == Day))
-                pico_display.set_pen(0, 255, 0);
-            else
-                pico_display.set_pen(255, 255, 255);
-            myPrintLowFont(Point(5, 120), dayStr);
-
-            if ((dState == ClockSetup) && (sState == Month))
-                pico_display.set_pen(0, 255, 0);
-            else
-                pico_display.set_pen(255, 255, 255);
-            myPrintLowFont(Point(160, 120), montStr);
-            if (dayweek == Sunday)
-                pico_display.set_pen(255, 0, 0); // Red
-            else
-                pico_display.set_pen(255, 255, 255);
-            myPrintLowFont(Point(5, 160), dowStr);
-            if ((dState == ClockSetup) && (sState == Year))
-                pico_display.set_pen(0, 255, 0);
-            else
-                pico_display.set_pen(255, 255, 255);
-            myPrintLowFont(Point(160, 160), yearStr);
-
-            if (dState == ClockSetup)
-            {
-                pico_display.set_pen(0, 255, 0); // green
-                myPrintLowFont(Point(100, 200), "Setup");
-            }
+            updateDisplay(void);
 
             pico_display.set_pen(255, 0, 0); // Red
             pico_display.text(mainString, mainS_location, 320);

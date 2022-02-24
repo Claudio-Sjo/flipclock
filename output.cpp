@@ -1,5 +1,6 @@
 // Filename output.cpp
 
+#include "clock.hpp"
 #include "fonts/bitmap_db.h"
 #include "fonts/clockFonts.h"
 #include "fonts/lowfontgen.h"
@@ -153,3 +154,167 @@ void mergeDigitPrint(Point location, uint8_t before, uint8_t after, uint8_t sk, 
     }
 }
 
+// Print information on the display
+void updateDisplay(void)
+{
+    switch (day)
+    {
+    case 1:
+    case 21:
+    case 31:
+        sprintf(dayStr, "%dst", day);
+        break;
+    case 2:
+    case 22:
+        sprintf(dayStr, "%dnd", day);
+        break;
+    case 3:
+    case 23:
+        sprintf(dayStr, "%drd", day);
+        break;
+    default:
+        sprintf(dayStr, "%dth", day);
+        break;
+    }
+
+    switch (month)
+    {
+    case January:
+        sprintf(montStr, "January");
+        break;
+    case February:
+        sprintf(montStr, "February");
+        break;
+    case March:
+        sprintf(montStr, "March");
+        break;
+    case April:
+        sprintf(montStr, "April");
+        break;
+    case May:
+        sprintf(montStr, "May");
+        break;
+    case June:
+        sprintf(montStr, "June");
+        break;
+    case July:
+        sprintf(montStr, "July");
+        break;
+    case August:
+        sprintf(montStr, "August");
+        break;
+    case September:
+        sprintf(montStr, "September");
+        break;
+    case October:
+        sprintf(montStr, "October");
+        break;
+    case November:
+        sprintf(montStr, "November");
+        break;
+    case December:
+        sprintf(montStr, "December");
+        break;
+    }
+
+    switch (dayweek)
+    {
+    case Monday:
+        sprintf(dowStr, "Monday");
+        break;
+    case Tuesday:
+        sprintf(dowStr, "Tuesday");
+        break;
+    case Wednesday:
+        sprintf(dowStr, "Wednesday");
+        break;
+    case Thursday:
+        sprintf(dowStr, "Thursday");
+        break;
+    case Friday:
+        sprintf(dowStr, "Friday");
+        break;
+    case Saturday:
+        sprintf(dowStr, "Saturday");
+        break;
+    case Sunday:
+        sprintf(dowStr, "Sunday");
+        break;
+    }
+
+    sprintf(yearStr, "%d", year);
+
+    if ((dState == ClockSetup) && (sState == Day))
+        pico_display.set_pen(0, 255, 0);
+    else
+        pico_display.set_pen(255, 255, 255);
+    myPrintLowFont(Point(5, 120), dayStr);
+
+    if ((dState == ClockSetup) && (sState == Month))
+        pico_display.set_pen(0, 255, 0);
+    else
+        pico_display.set_pen(255, 255, 255);
+    myPrintLowFont(Point(160, 120), montStr);
+    if (dayweek == Sunday)
+        pico_display.set_pen(255, 0, 0); // Red
+    else
+        pico_display.set_pen(255, 255, 255);
+    myPrintLowFont(Point(5, 160), dowStr);
+    if ((dState == ClockSetup) && (sState == Year))
+        pico_display.set_pen(0, 255, 0);
+    else
+        pico_display.set_pen(255, 255, 255);
+    myPrintLowFont(Point(160, 160), yearStr);
+
+    if (dState == ClockSetup)
+    {
+        pico_display.set_pen(0, 255, 0); // green
+        myPrintLowFont(Point(100, 200), "Setup");
+    }
+}
+
+// HSV Conversion expects float inputs in the range of 0.00-1.00 for each channel
+// Outputs are rgb in the range 0-255 for each channel
+void from_hsv(float h, float s, float v, uint8_t &r, uint8_t &g, uint8_t &b)
+{
+    float i = floor(h * 6.0f);
+    float f = h * 6.0f - i;
+    v *= 255.0f;
+    uint8_t p = v * (1.0f - s);
+    uint8_t q = v * (1.0f - f * s);
+    uint8_t t = v * (1.0f - (1.0f - f) * s);
+
+    switch (int(i) % 6)
+    {
+    case 0:
+        r = v;
+        g = t;
+        b = p;
+        break;
+    case 1:
+        r = q;
+        g = v;
+        b = p;
+        break;
+    case 2:
+        r = p;
+        g = v;
+        b = t;
+        break;
+    case 3:
+        r = p;
+        g = q;
+        b = v;
+        break;
+    case 4:
+        r = t;
+        g = p;
+        b = v;
+        break;
+    case 5:
+        r = v;
+        g = p;
+        b = q;
+        break;
+    }
+}
