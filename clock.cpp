@@ -2,8 +2,8 @@
 #include "fonts/bitmap_db.h"
 #include "fonts/lowfontgen.h"
 #include "input.hpp"
-#include "output.hpp"
 #include "main.hpp"
+#include "output.hpp"
 #include "pico/stdlib.h"
 #include "pico_display_2.hpp"
 #include <cstdlib>
@@ -13,8 +13,8 @@
 #include <vector>
 
 using namespace pimoroni;
-extern int dState;
-extern int sState;
+extern int              dState;
+extern int              sState;
 extern volatile uint8_t scheduler;
 
 volatile uint8_t  hours   = 0;

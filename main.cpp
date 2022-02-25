@@ -1,19 +1,21 @@
-#include "fonts/bitmap_db.h"
-#include "fonts/lowfontgen.h"
-#include "input.hpp"
-#include <cstdlib>
+#include "main.hpp"
+
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
+
+#include <cstdlib>
 #include <vector>
-#include "main.hpp"
+
 #include "clock.hpp"
+#include "fonts/bitmap_db.h"
+#include "fonts/lowfontgen.h"
+#include "input.hpp"
 #include "output.hpp"
+#include "pico/critical_section.h"
 #include "pico/stdlib.h"
 #include "pico_display_2.hpp"
 #include "ui.hpp"
-#include "pico/critical_section.h"
-
 
 critical_section_t debounce_section;
 
@@ -42,17 +44,14 @@ char mainString[64];
 
 volatile uint8_t scheduler = 0;
 
-
 char dayStr[5];
 char montStr[12];
 char dowStr[12];
 char yearStr[5];
 
-
 // Here we play with internal timers
 void oneSecCallback(void)
 {
-
     if (++sec >= 60)
     {
         if (++min >= 60)
@@ -68,7 +67,6 @@ void oneSecCallback(void)
 
 bool oneTwenthCallback(struct repeating_timer *t)
 {
-
     if (++scheduler >= 20)
     {
         oneSecCallback();
@@ -101,7 +99,6 @@ int main()
 
     // Strings for printing information
 
-
     w1top = 0;
     w1dwn = (pico_display.bounds.h / 3) * 2;
     w2top = w1dwn + 1;
@@ -113,12 +110,13 @@ int main()
     for (int i = 0; i < OBJECTS; i++)
     {
         pt shape;
-        shape.x   = rand() % (pico_display.bounds.w);
-        shape.y   = rand() % w1dwn;
-        shape.r   = (rand() % 10) + 3;
-        shape.dx  = float(rand() % 255) / 64.0f;
-        shape.dy  = float(rand() % 255) / 64.0f;
-        shape.pen = pico_display.create_pen(rand() % 255, rand() % 255, rand() % 255);
+        shape.x  = rand() % (pico_display.bounds.w);
+        shape.y  = rand() % w1dwn;
+        shape.r  = (rand() % 10) + 3;
+        shape.dx = float(rand() % 255) / 64.0f;
+        shape.dy = float(rand() % 255) / 64.0f;
+        shape.pen =
+            pico_display.create_pen(rand() % 255, rand() % 255, rand() % 255);
         shapes.push_back(shape);
     }
 
@@ -175,7 +173,6 @@ int main()
                 }
                 if (background == Stars)
                 {
-
                     // Let's slowly move the stars from right to left
                     shape.x += 6 / 360000.0;
 
@@ -185,10 +182,14 @@ int main()
                     }
 
                     pico_display.set_pen(255, 255, 0); // Shining yellow
-                    pico_display.line(Point(shape.x - 5, shape.y), Point(shape.x + 5, shape.y));
-                    pico_display.line(Point(shape.x, shape.y - 5), Point(shape.x, shape.y + 5));
-                    pico_display.line(Point(shape.x - 3, shape.y - 3), Point(shape.x + 3, shape.y + 3));
-                    pico_display.line(Point(shape.x - 3, shape.y + 3), Point(shape.x + 3, shape.y - 3));
+                    pico_display.line(Point(shape.x - 5, shape.y),
+                                      Point(shape.x + 5, shape.y));
+                    pico_display.line(Point(shape.x, shape.y - 5),
+                                      Point(shape.x, shape.y + 5));
+                    pico_display.line(Point(shape.x - 3, shape.y - 3),
+                                      Point(shape.x + 3, shape.y + 3));
+                    pico_display.line(Point(shape.x - 3, shape.y + 3),
+                                      Point(shape.x + 3, shape.y - 3));
                     pico_display.circle(Point(shape.x, shape.y), 2);
                 }
             }
@@ -199,10 +200,10 @@ int main()
             // then we can divide millis by the number of milliseconds
             // we want a full colour cycle to take. 5000 = 5 sec.
             /*
-            uint8_t r = 0, g = 0, b = 0;
-            from_hsv((float)millis() / 5000.0f, 1.0f, 0.5f + sinf(millis() / 100.0f / 3.14159f) * 0.5f, r, g, b);
-            pico_display.set_led(r, g, b);
-            */
+      uint8_t r = 0, g = 0, b = 0;
+      from_hsv((float)millis() / 5000.0f, 1.0f, 0.5f + sinf(millis() / 100.0f
+      / 3.14159f) * 0.5f, r, g, b); pico_display.set_led(r, g, b);
+      */
 
             updateDisplay();
 

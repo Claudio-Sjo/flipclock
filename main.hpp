@@ -7,7 +7,6 @@
 #include <string.h>
 #include <vector>
 
-
 // We need a state machine for properly handling the display
 enum displayState
 {
@@ -58,6 +57,5 @@ typedef enum backGround
     Balloons,
     Stars
 } bgEnum;
-
 
 #endif

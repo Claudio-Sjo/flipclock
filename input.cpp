@@ -1,10 +1,10 @@
 // filemane input.cpp
-// this file contains the lowlevel interface for input data from display  
+// this file contains the lowlevel interface for input data from display
 
+#include "input.hpp"
 #include "pico/critical_section.h"
 #include "pico/stdlib.h"
 #include "pico_display_2.hpp"
-#include "input.hpp"
 #include <cstdlib>
 #include <math.h>
 #include <stdio.h>
@@ -13,8 +13,8 @@
 
 using namespace pimoroni;
 
-extern PicoDisplay2 pico_display;
-extern char mainString[];
+extern PicoDisplay2       pico_display;
+extern char               mainString[];
 extern critical_section_t debounce_section;
 
 static volatile uint16_t keyWrite  = 0;
