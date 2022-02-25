@@ -1,0 +1,2 @@
+# Powershell command to build compiler-rt
+cmake ..
