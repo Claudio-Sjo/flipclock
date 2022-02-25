@@ -1,3 +1,8 @@
+#include <cstdlib>
+#include <math.h>
+#include <stdio.h>
+#include <string.h>
+#include <vector>
 #include "main.hpp"
 #include "clock.hpp"
 #include "fonts/bitmap_db.h"
@@ -8,11 +13,8 @@
 #include "pico/stdlib.h"
 #include "pico_display_2.hpp"
 #include "ui.hpp"
-#include <cstdlib>
-#include <math.h>
-#include <stdio.h>
-#include <string.h>
-#include <vector>
+#include "pico/critical_section.h"
+
 
 critical_section_t debounce_section;
 
@@ -23,7 +25,7 @@ static volatile uint16_t keysReady = 0;
 using namespace pimoroni;
 
 extern uint16_t     buffer[];
-extern PicoDisplay2 pico_display();
+extern PicoDisplay2 pico_display;
 
 bgEnum background = Stars;
 
@@ -44,6 +46,13 @@ int w2dwn;
 char mainString[64];
 
 volatile uint8_t scheduler = 0;
+
+
+char dayStr[5];
+char montStr[12];
+char dowStr[12];
+char yearStr[5];
+
 
 // Here we play with internal timers
 void oneSecCallback(void)
@@ -98,10 +107,7 @@ int main()
     };
 
     // Strings for printing information
-    char dayStr[5];
-    char montStr[12];
-    char dowStr[12];
-    char yearStr[5];
+
 
     w1top = 0;
     w1dwn = (pico_display.bounds.h / 3) * 2;
@@ -205,7 +211,7 @@ int main()
             pico_display.set_led(r, g, b);
             */
 
-            updateDisplay(void);
+            updateDisplay();
 
             pico_display.set_pen(255, 0, 0); // Red
             pico_display.text(mainString, mainS_location, 320);

@@ -14,6 +14,16 @@
 #include <string.h>
 #include <vector>
 
+using namespace pimoroni;
+
+extern int dState;
+extern int sState;
+
+extern char dayStr[];
+extern char montStr[];
+extern char dowStr[];
+extern char yearStr[];
+
 uint16_t     buffer[PicoDisplay2::WIDTH * PicoDisplay2::HEIGHT];
 PicoDisplay2 pico_display(buffer);
 

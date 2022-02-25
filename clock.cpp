@@ -3,6 +3,7 @@
 #include "fonts/clockFonts.h"
 #include "fonts/lowfontgen.h"
 #include "input.hpp"
+#include "output.hpp"
 #include "main.hpp"
 #include "pico/stdlib.h"
 #include "pico_display_2.hpp"
@@ -11,6 +12,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <vector>
+
+using namespace pimoroni;
+extern int dState;
+extern int sState;
+extern volatile uint8_t scheduler;
 
 volatile uint8_t  hours   = 0;
 volatile uint8_t  min     = 0;

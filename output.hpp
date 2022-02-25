@@ -1,9 +1,12 @@
 // File output.hpp
 #ifndef OUTPUT_HPP_HEADERFILE
 #define OUTPUT_HPP_HEADERFILE
+#include "pico_display_2.hpp"
+
+using namespace pimoroni;
 
 extern uint16_t     buffer[];
-extern PicoDisplay2 pico_display();
+extern PicoDisplay2 pico_display;
 
 void myPrintLowFont(Point location, const std::string str);
 void printDigit(Point location, uint8_t digit, int r, int g, int b);
