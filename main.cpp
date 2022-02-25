@@ -74,13 +74,11 @@ bool oneTwenthCallback(struct repeating_timer *t)
         oneSecCallback();
         scheduler = 0;
     }
-
     return true;
 }
 
 int main()
 {
-
     static uint8_t oldsk;
     critical_section_init(&debounce_section);
 
