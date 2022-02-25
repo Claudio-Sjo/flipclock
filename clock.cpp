@@ -1,6 +1,5 @@
 // Filename clock.cpp
 #include "fonts/bitmap_db.h"
-#include "fonts/clockFonts.h"
 #include "fonts/lowfontgen.h"
 #include "input.hpp"
 #include "output.hpp"

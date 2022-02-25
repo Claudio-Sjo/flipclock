@@ -1,3 +1,6 @@
+#include "fonts/bitmap_db.h"
+#include "fonts/lowfontgen.h"
+#include "input.hpp"
 #include <cstdlib>
 #include <math.h>
 #include <stdio.h>
@@ -5,10 +8,6 @@
 #include <vector>
 #include "main.hpp"
 #include "clock.hpp"
-#include "fonts/bitmap_db.h"
-#include "fonts/clockFonts.h"
-#include "fonts/lowfontgen.h"
-#include "input.hpp"
 #include "output.hpp"
 #include "pico/stdlib.h"
 #include "pico_display_2.hpp"
@@ -17,10 +16,6 @@
 
 
 critical_section_t debounce_section;
-
-static volatile uint16_t keyWrite  = 0;
-static volatile uint16_t keyRead   = 0;
-static volatile uint16_t keysReady = 0;
 
 using namespace pimoroni;
 

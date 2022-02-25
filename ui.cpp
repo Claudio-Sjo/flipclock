@@ -1,9 +1,9 @@
 // Filename ui.cpp
 #include "fonts/bitmap_db.h"
-#include "fonts/clockFonts.h"
 #include "fonts/lowfontgen.h"
 #include "input.hpp"
 #include "main.hpp"
+#include "clock.hpp"
 #include "pico/stdlib.h"
 #include "pico_display_2.hpp"
 #include <cstdlib>
@@ -11,6 +11,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <vector>
+
+extern int dState;
+extern int sState;
 
 void menuHandler(Key pressed)
 {
