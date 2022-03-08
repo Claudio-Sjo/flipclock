@@ -111,7 +111,7 @@ int main()
     {
         pt shape;
         shape.x  = rand() % (pico_display.bounds.w);
-        shape.y  = rand() % w1dwn;
+        shape.y  = rand() % w2dwn;
         shape.r  = (rand() % 10) + 3;
         shape.dx = float(rand() % 255) / 64.0f;
         shape.dy = float(rand() % 255) / 64.0f;
@@ -143,8 +143,10 @@ int main()
 
             for (auto &shape : shapes)
             {
-                if (background == Balloons)
+                 if (background == Balloons)
                 {
+                    shape.y = shape.y > w1dwn ? w1dwn : shape.y;
+
                     shape.x += shape.dx;
                     shape.y += shape.dy;
                     if ((shape.x - shape.r) < 0)
@@ -174,7 +176,7 @@ int main()
                 if (background == Stars)
                 {
                     // Let's slowly move the stars from right to left
-                    shape.x += 6 / 360000.0;
+                    shape.x += 6 / 3600.0;
 
                     if ((shape.x + 5) >= (pico_display.bounds.w))
                     {
