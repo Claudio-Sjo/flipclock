@@ -7,6 +7,16 @@
 #include <string.h>
 #include <vector>
 
+struct pt
+{
+    float    x;
+    float    y;
+    uint8_t  r;
+    float    dx;
+    float    dy;
+    uint16_t pen;
+};
+
 // We need a state machine for properly handling the display
 enum displayState
 {

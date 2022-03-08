@@ -20,7 +20,8 @@ add_executable(${NAME}
     input.cpp 
     output.cpp 
     ui.cpp 
-    clock.cpp 
+    clock.cpp
+    background.cpp 
 )
 
 # Include required libraries
