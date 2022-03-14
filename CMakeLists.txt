@@ -5,6 +5,7 @@ set(NAME flipclock) # <-- Name your project/executable here!
 
 include(pimoroni_pico_import.cmake)
 include(pico_sdk_import.cmake)
+# include(ds3231/CMakeLists.txt)
 
 # Gooey boilerplate
 project(${NAME} C CXX ASM)
@@ -17,6 +18,12 @@ pico_sdk_init()
 # Add your source files
 add_executable(${NAME}
     main.cpp # <-- Add source files here!
+    input.cpp 
+    output.cpp 
+    ui.cpp 
+    clock.cpp
+    background.cpp 
+    ds3231.cpp
 )
 
 # Include required libraries
@@ -26,7 +33,7 @@ include(libraries/pico_display_2/pico_display_2)
 
 # Don't forget to link the libraries you need!
 target_link_libraries(${NAME}
-    pico_stdlib hardware_spi hardware_pwm hardware_dma pico_display_2 # <-- List libraries here!
+    pico_stdlib hardware_spi hardware_pwm hardware_dma pico_display_2 hardware_rtc hardware_i2c# <-- List libraries here!
 )
 
 # create map/bin/hex file etc.

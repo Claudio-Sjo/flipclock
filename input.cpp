@@ -1,6 +1,7 @@
 // filemane input.cpp
-// this file contains the lowlevel interface for input data from display  
+// this file contains the lowlevel interface for input data from display
 
+#include "input.hpp"
 #include "pico/critical_section.h"
 #include "pico/stdlib.h"
 #include "pico_display_2.hpp"
@@ -12,7 +13,13 @@
 
 using namespace pimoroni;
 
-extern pico_display(buffer);
+extern PicoDisplay2       pico_display;
+// extern char               mainString[];
+extern critical_section_t debounce_section;
+
+static volatile uint16_t keyWrite  = 0;
+static volatile uint16_t keyRead   = 0;
+static volatile uint16_t keysReady = 0;
 
 Key inputRing[MAXQUEUE];
 
@@ -133,7 +140,7 @@ void queueKey(Key key)
     if (key == NoKey)
         return;
     // valid char received, enqueue it!
-    sprintf(mainString, "valid key : %d", key);
+    // sprintf(mainString, "valid key : %d", key);
     critical_section_enter_blocking(&debounce_section);
     /* Space left on input ring? */
     if (keysReady < MAXQUEUE)

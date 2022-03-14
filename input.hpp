@@ -3,6 +3,13 @@
 #ifndef INPUT_HPP_HEADERFILE
 #define INPUT_HPP_HEADERFILE
 
+#include <math.h>
+#include <stdio.h>
+#include <string.h>
+
+#include <cstdlib>
+#include <vector>
+
 #define BUTTONS 4 // only 4 buttons on the pico display
 
 #define MAXQUEUE      32
