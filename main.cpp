@@ -9,7 +9,7 @@
 
 #include "background.hpp"
 #include "clock.hpp"
-#include "ds3231.h"
+#include "ds3231.hpp"
 #include "fonts/bitmap_db.h"
 #include "fonts/lowfontgen.h"
 #include "input.hpp"
@@ -27,7 +27,7 @@ extern uint16_t     buffer[];
 extern PicoDisplay2 pico_display;
 
 // rtc relates stuffs
-extern char  buf[];
+extern uint8_t  buf[];
 extern char *week[];
 
 // displayState dState = Clock;
@@ -108,10 +108,10 @@ int main()
     // rtc related part
 
     i2c_init(I2C_PORT, 100 * 1000);
-    gpio_set_function(I2C_SDA, GPIO_FUNC_I2C);
-    gpio_set_function(I2C_SCL, GPIO_FUNC_I2C);
-    gpio_pull_up(I2C_SDA);
-    gpio_pull_up(I2C_SCL);
+    // gpio_set_function(I2C_SDA, GPIO_FUNC_I2C);
+    // gpio_set_function(I2C_SCL, GPIO_FUNC_I2C);
+    //gpio_pull_up(I2C_SDA);
+    //gpio_pull_up(I2C_SCL);
     sprintf(mainString, "DS3231 Test Program ...\n\n");
 
     // Debouncing Timer
@@ -143,7 +143,7 @@ int main()
 
             updateDisplay();
 
-            ds3231ReadTime();
+            // ds3231ReadTime();
             buf[0] = buf[0] & 0x7F; // sec
             buf[1] = buf[1] & 0x7F; // min
             buf[2] = buf[2] & 0x3F; // hour
@@ -151,7 +151,7 @@ int main()
             buf[4] = buf[4] & 0x3F; // day
             buf[5] = buf[5] & 0x1F; // mouth
 
-            sprintf(mainString, "%02x:%02x:%02x  ", buf[2], buf[1], buf[0]);
+            // sprintf(mainString, "%02x:%02x:%02x  ", buf[2], buf[1], buf[0]);
             pico_display.set_pen(255, 0, 0); // Red
             pico_display.text(mainString, mainS_location, 320);
 

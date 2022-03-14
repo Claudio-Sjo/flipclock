@@ -23,7 +23,7 @@ add_executable(${NAME}
     ui.cpp 
     clock.cpp
     background.cpp 
-    ds3231.c
+    ds3231.cpp
 )
 
 # Include required libraries
