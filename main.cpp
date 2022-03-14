@@ -7,7 +7,9 @@
 #include <cstdlib>
 #include <vector>
 
+#include "background.hpp"
 #include "clock.hpp"
+#include "ds3231.h"
 #include "fonts/bitmap_db.h"
 #include "fonts/lowfontgen.h"
 #include "input.hpp"
@@ -16,8 +18,6 @@
 #include "pico/stdlib.h"
 #include "pico_display_2.hpp"
 #include "ui.hpp"
-#include "background.hpp"
-#include "ds3231/ds3231.h"
 
 critical_section_t debounce_section;
 
@@ -105,15 +105,14 @@ int main()
 
     sprintf(mainString, "********");
 
-// rtc related part
+    // rtc related part
 
     i2c_init(I2C_PORT, 100 * 1000);
     gpio_set_function(I2C_SDA, GPIO_FUNC_I2C);
     gpio_set_function(I2C_SCL, GPIO_FUNC_I2C);
     gpio_pull_up(I2C_SDA);
     gpio_pull_up(I2C_SCL);
-    sprintf(mainString,"DS3231 Test Program ...\n\n");
-
+    sprintf(mainString, "DS3231 Test Program ...\n\n");
 
     // Debouncing Timer
     add_repeating_timer_ms(2, Debounce, NULL, &debounceTimer);
@@ -162,8 +161,6 @@ int main()
 
             pico_display.update();
             oldsk = scheduler;
-
-
         }
     }
 

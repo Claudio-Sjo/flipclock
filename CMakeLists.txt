@@ -15,9 +15,6 @@ set(CMAKE_CXX_STANDARD 17)
 # Initialize the SDK
 pico_sdk_init()
 
-add_subdirectory(ds3231)
-include_directories(./ds3231)
-
 # Add your source files
 add_executable(${NAME}
     main.cpp # <-- Add source files here!
@@ -26,6 +23,7 @@ add_executable(${NAME}
     ui.cpp 
     clock.cpp
     background.cpp 
+    ds3231.c
 )
 
 # Include required libraries
@@ -35,7 +33,7 @@ include(libraries/pico_display_2/pico_display_2)
 
 # Don't forget to link the libraries you need!
 target_link_libraries(${NAME}
-    pico_stdlib hardware_spi hardware_pwm hardware_dma pico_display_2 hardware_rtc ds3231 hardware_i2c# <-- List libraries here!
+    pico_stdlib hardware_spi hardware_pwm hardware_dma pico_display_2 hardware_rtc hardware_i2c# <-- List libraries here!
 )
 
 # create map/bin/hex file etc.

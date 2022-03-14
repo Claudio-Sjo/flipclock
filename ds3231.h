@@ -12,8 +12,8 @@
 #define I2C_SCL		20	
 #define I2C_SDA		19
 
-int ds3231SetTime();
-void ds3231ReadTime();
+int  ds3231SetTime(void);
+void ds3231ReadTime(void);
 
 #endif
 
