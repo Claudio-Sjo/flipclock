@@ -17,6 +17,7 @@
 #include "pico_display_2.hpp"
 #include "ui.hpp"
 #include "background.hpp"
+#include "ds3231/ds3231.h"
 
 critical_section_t debounce_section;
 
@@ -25,6 +26,9 @@ using namespace pimoroni;
 extern uint16_t     buffer[];
 extern PicoDisplay2 pico_display;
 
+// rtc relates stuffs
+extern char  buf[];
+extern char *week[];
 
 // displayState dState = Clock;
 // setupState   sState = Hours;
@@ -101,6 +105,16 @@ int main()
 
     sprintf(mainString, "********");
 
+// rtc related part
+
+    i2c_init(I2C_PORT, 100 * 1000);
+    gpio_set_function(I2C_SDA, GPIO_FUNC_I2C);
+    gpio_set_function(I2C_SCL, GPIO_FUNC_I2C);
+    gpio_pull_up(I2C_SDA);
+    gpio_pull_up(I2C_SCL);
+    sprintf(mainString,"DS3231 Test Program ...\n\n");
+
+
     // Debouncing Timer
     add_repeating_timer_ms(2, Debounce, NULL, &debounceTimer);
 
@@ -130,6 +144,15 @@ int main()
 
             updateDisplay();
 
+            ds3231ReadTime();
+            buf[0] = buf[0] & 0x7F; // sec
+            buf[1] = buf[1] & 0x7F; // min
+            buf[2] = buf[2] & 0x3F; // hour
+            buf[3] = buf[3] & 0x07; // week
+            buf[4] = buf[4] & 0x3F; // day
+            buf[5] = buf[5] & 0x1F; // mouth
+
+            sprintf(mainString, "%02x:%02x:%02x  ", buf[2], buf[1], buf[0]);
             pico_display.set_pen(255, 0, 0); // Red
             pico_display.text(mainString, mainS_location, 320);
 
@@ -139,6 +162,8 @@ int main()
 
             pico_display.update();
             oldsk = scheduler;
+
+
         }
     }
 

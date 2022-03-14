@@ -14,7 +14,7 @@
 using namespace pimoroni;
 
 extern PicoDisplay2       pico_display;
-extern char               mainString[];
+// extern char               mainString[];
 extern critical_section_t debounce_section;
 
 static volatile uint16_t keyWrite  = 0;
@@ -140,7 +140,7 @@ void queueKey(Key key)
     if (key == NoKey)
         return;
     // valid char received, enqueue it!
-    sprintf(mainString, "valid key : %d", key);
+    // sprintf(mainString, "valid key : %d", key);
     critical_section_enter_blocking(&debounce_section);
     /* Space left on input ring? */
     if (keysReady < MAXQUEUE)

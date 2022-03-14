@@ -9,8 +9,8 @@
 /*the first verison use i2c1(GP6,GP7)*/
 /*the new vesion use i2c0(GP20,GP21)*/
 #define I2C_PORT	i2c1
-#define I2C_SCL		7	
-#define I2C_SDA		6
+#define I2C_SCL		20	
+#define I2C_SDA		19
 
 int ds3231SetTime();
 void ds3231ReadTime();
