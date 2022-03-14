@@ -34,7 +34,7 @@ include(libraries/pico_display_2/pico_display_2)
 
 # Don't forget to link the libraries you need!
 target_link_libraries(${NAME}
-    pico_stdlib hardware_spi hardware_pwm hardware_dma pico_display_2 rtc ds3231 hardware_i2c# <-- List libraries here!
+    pico_stdlib hardware_spi hardware_pwm hardware_dma pico_display_2 hardware_rtc ds3231 hardware_i2c# <-- List libraries here!
 )
 
 # create map/bin/hex file etc.
