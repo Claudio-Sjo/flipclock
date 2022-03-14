@@ -5,6 +5,7 @@ set(NAME flipclock) # <-- Name your project/executable here!
 
 include(pimoroni_pico_import.cmake)
 include(pico_sdk_import.cmake)
+# include(ds3231/CMakeLists.txt)
 
 # Gooey boilerplate
 project(${NAME} C CXX ASM)

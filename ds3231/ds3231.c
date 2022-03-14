@@ -37,7 +37,7 @@ int ds3231SetTime()
 	return 0;
 }
 
-void ds3231ReadTime() 
+void ds3231ReadTime()
 {   
 	uint8_t val = 0x00;  
 	i2c_write_blocking(I2C_PORT,addr,&val,1,true);
