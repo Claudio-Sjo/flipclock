@@ -16,6 +16,7 @@
 #include "pico/stdlib.h"
 #include "pico_display_2.hpp"
 #include "ui.hpp"
+#include "background.hpp"
 
 critical_section_t debounce_section;
 

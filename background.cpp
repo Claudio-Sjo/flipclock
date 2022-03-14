@@ -7,6 +7,7 @@
 #include "main.hpp"
 #include "pico/stdlib.h"
 #include "pico_display_2.hpp"
+#include "output.hpp"
 
 // It was 100 baloons, but for half screen we change to 50
 #define OBJECTS 50
@@ -14,7 +15,7 @@ std::vector<pt> shapes;
 
 bgEnum background = Stars;
 
-void initialise_bg()
+void initialise_bg(void)
 {
     for (int i = 0; i < OBJECTS; i++)
     {

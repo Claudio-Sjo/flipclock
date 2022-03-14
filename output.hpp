@@ -5,6 +5,11 @@
 
 using namespace pimoroni;
 
+extern int w1top;
+extern int w1dwn;
+extern int  w2top;
+extern int w2dwn;
+
 extern uint16_t     buffer[];
 extern PicoDisplay2 pico_display;
 
