@@ -1,10 +1,12 @@
 // Filename clock.cpp
 #include "fonts/bitmap_db.h"
 #include "fonts/lowfontgen.h"
+#include "hardware/rtc.h"
 #include "input.hpp"
 #include "main.hpp"
 #include "output.hpp"
 #include "pico/stdlib.h"
+#include "pico/util/datetime.h"
 #include "pico_display_2.hpp"
 #include <cstdlib>
 #include <math.h>
@@ -17,6 +19,7 @@ extern int              dState;
 extern int              sState;
 extern volatile uint8_t scheduler;
 
+/* 
 volatile uint8_t  hours   = 0;
 volatile uint8_t  min     = 0;
 volatile uint8_t  sec     = 0;
@@ -24,6 +27,17 @@ volatile uint8_t  day     = 1;
 volatile uint8_t  dayweek = Monday;
 volatile uint8_t  month   = January;
 volatile uint16_t year    = 2022;
+*/
+
+datetime_t t = {
+    .year  = 2020,
+    .month = 06,
+    .day   = 05,
+    .dotw  = 5, // 0 is Sunday, so 5 is Friday
+    .hour  = 15,
+    .min   = 45,
+    .sec   = 00
+    };
 
 void updateHour(uint8_t hh, uint8_t mm, uint8_t ss)
 {
@@ -45,7 +59,7 @@ void updateHour(uint8_t hh, uint8_t mm, uint8_t ss)
         if ((oldhh / 10) != (hh / 10))
             mergeDigitPrint(digitPoint, oldhh / 10, hh / 10, scheduler, r, g, b);
         else
-            printDigit(digitPoint, hours / 10, r, g, b);
+            printDigit(digitPoint, t.hour / 10, r, g, b);
         digitPoint.x = 50;
         mergeDigitPrint(digitPoint, oldhh % 10, hh % 10, scheduler, r, g, b);
         if (scheduler > 10)
@@ -53,9 +67,9 @@ void updateHour(uint8_t hh, uint8_t mm, uint8_t ss)
     }
     else
     {
-        printDigit(digitPoint, hours / 10, r, g, b);
+        printDigit(digitPoint, t.hour / 10, r, g, b);
         digitPoint.x = 50;
-        printDigit(digitPoint, hours % 10, r, g, b);
+        printDigit(digitPoint, t.hour % 10, r, g, b);
     }
 
     if ((dState == ClockSetup) && (sState == Minutes))
@@ -73,7 +87,7 @@ void updateHour(uint8_t hh, uint8_t mm, uint8_t ss)
         if ((oldmm / 10) != (mm / 10))
             mergeDigitPrint(digitPoint, oldmm / 10, mm / 10, scheduler, r, g, b);
         else
-            printDigit(digitPoint, min / 10, r, g, b);
+            printDigit(digitPoint, t.min / 10, r, g, b);
         digitPoint.x = 160;
         mergeDigitPrint(digitPoint, oldmm % 10, mm % 10, scheduler, r, g, b);
         if (scheduler > 10)
@@ -81,9 +95,9 @@ void updateHour(uint8_t hh, uint8_t mm, uint8_t ss)
     }
     else
     {
-        printDigit(digitPoint, min / 10, r, g, b);
+        printDigit(digitPoint, t.min / 10, r, g, b);
         digitPoint.x = 160;
-        printDigit(digitPoint, min % 10, r, g, b);
+        printDigit(digitPoint, t.min % 10, r, g, b);
     }
 
     r = g = b = 255;
@@ -94,7 +108,7 @@ void updateHour(uint8_t hh, uint8_t mm, uint8_t ss)
         if ((oldss / 10) != (ss / 10))
             mergeDigitPrint(digitPoint, oldss / 10, ss / 10, scheduler, r, g, b);
         else
-            printDigit(digitPoint, sec / 10, r, g, b);
+            printDigit(digitPoint, t.sec / 10, r, g, b);
         digitPoint.x = 270;
         mergeDigitPrint(digitPoint, oldss % 10, ss % 10, scheduler, r, g, b);
         if (scheduler > 10)
@@ -102,8 +116,18 @@ void updateHour(uint8_t hh, uint8_t mm, uint8_t ss)
     }
     else
     {
-        printDigit(digitPoint, sec / 10, r, g, b);
+        printDigit(digitPoint, t.sec / 10, r, g, b);
         digitPoint.x = 270;
-        printDigit(digitPoint, sec % 10, r, g, b);
+        printDigit(digitPoint, t.sec % 10, r, g, b);
     }
+}
+
+bool oneTwenthCallback(struct repeating_timer *rt)
+{
+    if (++scheduler >= 20)
+    {
+        rtc_get_datetime(&t);
+        scheduler = 0;
+    }
+    return true;
 }

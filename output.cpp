@@ -167,27 +167,27 @@ void mergeDigitPrint(Point location, uint8_t before, uint8_t after, uint8_t sk, 
 // Print information on the display
 void updateDisplay(void)
 {
-    switch (day)
+    switch (t.day)
     {
     case 1:
     case 21:
     case 31:
-        sprintf(dayStr, "%dst", day);
+        sprintf(dayStr, "%dst", t.day);
         break;
     case 2:
     case 22:
-        sprintf(dayStr, "%dnd", day);
+        sprintf(dayStr, "%dnd", t.day);
         break;
     case 3:
     case 23:
-        sprintf(dayStr, "%drd", day);
+        sprintf(dayStr, "%drd", t.day);
         break;
     default:
-        sprintf(dayStr, "%dth", day);
+        sprintf(dayStr, "%dth", t.day);
         break;
     }
 
-    switch (month)
+    switch (t.month)
     {
     case January:
         sprintf(montStr, "January");
@@ -227,7 +227,7 @@ void updateDisplay(void)
         break;
     }
 
-    switch (dayweek)
+    switch (t.dotw)
     {
     case Monday:
         sprintf(dowStr, "Monday");
@@ -252,7 +252,7 @@ void updateDisplay(void)
         break;
     }
 
-    sprintf(yearStr, "%d", year);
+    sprintf(yearStr, "%d", t.year);
 
     if ((dState == ClockSetup) && (sState == Day))
         pico_display.set_pen(0, 255, 0);
@@ -265,7 +265,7 @@ void updateDisplay(void)
     else
         pico_display.set_pen(255, 255, 255);
     myPrintLowFont(Point(160, 120), montStr);
-    if (dayweek == Sunday)
+    if (t.dotw == Sunday)
         pico_display.set_pen(255, 0, 0); // Red
     else
         pico_display.set_pen(255, 255, 255);

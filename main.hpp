@@ -37,13 +37,13 @@ enum setupState
 
 enum dayOfWeek
 {
+    Sunday,
     Monday,
     Tuesday,
     Wednesday,
     Thursday,
     Friday,
-    Saturday,
-    Sunday
+    Saturday
 };
 
 enum monthOfYear

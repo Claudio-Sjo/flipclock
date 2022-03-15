@@ -19,6 +19,9 @@
 #include "pico_display_2.hpp"
 #include "ui.hpp"
 
+#include "hardware/rtc.h"
+#include "pico/util/datetime.h"
+
 critical_section_t debounce_section;
 
 using namespace pimoroni;
@@ -27,8 +30,8 @@ extern uint16_t     buffer[];
 extern PicoDisplay2 pico_display;
 
 // rtc relates stuffs
-extern uint8_t  buf[];
-extern char *week[];
+extern uint8_t buf[];
+extern char   *week[];
 
 // displayState dState = Clock;
 // setupState   sState = Hours;
@@ -52,32 +55,6 @@ char dayStr[5];
 char montStr[12];
 char dowStr[12];
 char yearStr[5];
-
-// Here we play with internal timers
-void oneSecCallback(void)
-{
-    if (++sec >= 60)
-    {
-        if (++min >= 60)
-        {
-            if (++hours >= 24)
-                hours = 0;
-            min = 0;
-        }
-        sec = 0;
-    }
-    // sprintf(mainString, "%02d:%02d:%02d", hours, min, sec);
-}
-
-bool oneTwenthCallback(struct repeating_timer *t)
-{
-    if (++scheduler >= 20)
-    {
-        oneSecCallback();
-        scheduler = 0;
-    }
-    return true;
-}
 
 int main()
 {
@@ -107,11 +84,27 @@ int main()
 
     // rtc related part
 
+    // Start on Friday 5th of June 2020 15:45:00
+    datetime_t tloc = {
+        .year  = 2020,
+        .month = 06,
+        .day   = 05,
+        .dotw  = 5, // 0 is Sunday, so 5 is Friday
+        .hour  = 15,
+        .min   = 45,
+        .sec   = 00};
+
+    char  datetime_buf[256];
+    char *datetime_str = &datetime_buf[0];
+
+    rtc_init();
+    rtc_set_datetime(&tloc);
+
     i2c_init(I2C_PORT, 100 * 1000);
     // gpio_set_function(I2C_SDA, GPIO_FUNC_I2C);
     // gpio_set_function(I2C_SCL, GPIO_FUNC_I2C);
-    //gpio_pull_up(I2C_SDA);
-    //gpio_pull_up(I2C_SCL);
+    // gpio_pull_up(I2C_SDA);
+    // gpio_pull_up(I2C_SCL);
     sprintf(mainString, "DS3231 Test Program ...\n\n");
 
     // Debouncing Timer
@@ -130,7 +123,7 @@ int main()
 
             draw_background();
 
-            updateHour(hours, min, sec);
+            updateHour(t.hour, t.min, t.sec);
 
             // Since HSV takes a float from 0.0 to 1.0 indicating hue,
             // then we can divide millis by the number of milliseconds
@@ -150,6 +143,12 @@ int main()
             buf[3] = buf[3] & 0x07; // week
             buf[4] = buf[4] & 0x3F; // day
             buf[5] = buf[5] & 0x1F; // mouth
+
+
+        // rtc part
+            rtc_get_datetime(&tloc);
+            datetime_to_str(datetime_str, sizeof(datetime_buf), &tloc);
+            sprintf(mainString, "%s", datetime_str);
 
             // sprintf(mainString, "%02x:%02x:%02x  ", buf[2], buf[1], buf[0]);
             pico_display.set_pen(255, 0, 0); // Red

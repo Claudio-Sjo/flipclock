@@ -44,16 +44,16 @@ void menuHandler(Key pressed)
             switch (sState)
             {
             case Hours:
-                if (++hours > 23)
-                    hours = 0;
+                if (++t.hour > 23)
+                    t.hour = 0;
                 break;
             case Minutes:
-                if (++min > 59)
-                    min = 0;
+                if (++t.min > 59)
+                    t.min = 0;
                 break;
             case Day:
             {
-                switch (month)
+                switch (t.month)
                 {
                 case November:
                 case April:
@@ -62,21 +62,21 @@ void menuHandler(Key pressed)
                     maxday = 30;
                     break;
                 case February:
-                    maxday = (year % 4) ? 28 : 29;
+                    maxday = (t.year % 4) ? 28 : 29;
                     break;
                 }
-                if (++day > maxday)
-                    day = 1;
-                dayweek = (day - 1) % 7;
+                if (++t.day > maxday)
+                    t.day = 1;
+                t.dotw = (t.day - 1) % 7;
             }
             break;
             case Month:
-                if (++month > December)
-                    month = January;
+                if (++t.month > December)
+                    t.month = January;
                 break;
             case Year:
-                if (year > 2100)
-                    year = 2022;
+                if (t.year > 2100)
+                    t.year = 2022;
                 break;
             }
         }
@@ -90,19 +90,19 @@ void menuHandler(Key pressed)
             switch (sState)
             {
             case Hours:
-                if (hours == 0)
-                    hours = 0;
+                if (t.hour == 0)
+                    t.hour = 23;
                 else
-                    hours--;
+                    t.hour--;
                 break;
             case Minutes:
-                if (min == 0)
-                    min = 59;
+                if (t.min == 0)
+                    t.min = 59;
                 else
-                    min--;
+                    t.min--;
                 break;
             case Day:
-                switch (month)
+                switch (t.month)
                 {
                 case November:
                 case April:
@@ -111,25 +111,25 @@ void menuHandler(Key pressed)
                     maxday = 30;
                     break;
                 case February:
-                    maxday = (year % 4) ? 28 : 29;
+                    maxday = (t.year % 4) ? 28 : 29;
                     break;
                 }
-                if (day == 0)
-                    day = maxday;
+                if (t.day == 0)
+                    t.day = maxday;
                 else
-                    day--;
+                    t.day--;
                 break;
             case Month:
-                if (month == January)
-                    month = December;
+                if (t.month == January)
+                    t.month = December;
                 else
-                    month--;
+                    t.month--;
                 break;
             case Year:
-                if (year == 2022)
-                    year = 2100;
+                if (t.year == 2022)
+                    t.year = 2100;
                 else
-                    year--;
+                    t.year--;
                 break;
             }
         }
