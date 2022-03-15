@@ -19,7 +19,7 @@ extern int              dState;
 extern int              sState;
 extern volatile uint8_t scheduler;
 
-/* 
+/*
 volatile uint8_t  hours   = 0;
 volatile uint8_t  min     = 0;
 volatile uint8_t  sec     = 0;
@@ -36,8 +36,7 @@ datetime_t t = {
     .dotw  = 5, // 0 is Sunday, so 5 is Friday
     .hour  = 15,
     .min   = 45,
-    .sec   = 00
-    };
+    .sec   = 00};
 
 void updateHour(uint8_t hh, uint8_t mm, uint8_t ss)
 {
@@ -124,10 +123,23 @@ void updateHour(uint8_t hh, uint8_t mm, uint8_t ss)
 
 bool oneTwenthCallback(struct repeating_timer *rt)
 {
+    static int oldState = Clock;
+
     if (++scheduler >= 20)
     {
-        rtc_get_datetime(&t);
+        if (dState == ClockSetup)
+        {
+            t.sec = 0;
+        }
+        else
+        {
+            rtc_get_datetime(&t);
+        }
         scheduler = 0;
     }
+    if ((oldState == ClockSetup) && (dState == Clock))
+        rtc_set_datetime(&t);
+    oldState = dState;
+    
     return true;
 }

@@ -75,7 +75,7 @@ void menuHandler(Key pressed)
                     t.month = January;
                 break;
             case Year:
-                if (t.year > 2100)
+                if (++t.year > 2100)
                     t.year = 2022;
                 break;
             }
