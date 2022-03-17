@@ -112,6 +112,8 @@ int main()
 
     add_repeating_timer_ms(50, oneTwenthCallback, NULL, &oneTwenthtimer);
 
+    initialise_bg();
+
     while (true)
     {
         menuHandler(ReadInput());
@@ -144,8 +146,7 @@ int main()
             buf[4] = buf[4] & 0x3F; // day
             buf[5] = buf[5] & 0x1F; // mouth
 
-
-        // rtc part
+            // rtc part
             rtc_get_datetime(&tloc);
             datetime_to_str(datetime_str, sizeof(datetime_buf), &tloc);
             sprintf(mainString, "%s", datetime_str);

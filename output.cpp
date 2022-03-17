@@ -148,6 +148,27 @@ int getStrLenLowFont(const std::string str)
     return strLen;
 }
 
+int getStrLenDayLowFont(const std::string str)
+{
+    int strLen = 0;
+    for (int ix = 0; ix < str.size(); ix++)
+    {
+        int chidx = str[ix];
+        int chidv = chidx;
+        if (chidv < 'a')
+        {
+        chidx     = chidx - forte_24ptFontInfo.startChar;
+        strLen += forte_24ptDescriptors[chidx].widthBits + 2;
+        }
+        else
+        {
+            chidx = chidx - forte_12ptFontInfo.startChar;
+            strLen += forte_12ptDescriptors[chidx].widthBits + 2;
+        }
+    }
+    return strLen;
+}
+
 void myPrintLine(Point start, Point end, int r, int g, int b)
 {
     Point s = start;
@@ -335,7 +356,7 @@ void updateDisplay(void)
 // First row : 120
 // First digit : 0
     int ver = 120;
-    int hor = 160 - ((getStrLenLowFont(dowStr) + getStrLenLowFont(dayStr)) / 2);
+    int hor = 160 - ((getStrLenLowFont(dowStr) + getStrLenDayLowFont(dayStr)) / 2);
 
     if (t.dotw == Sunday)
         pico_display.set_pen(255, 0, 0); // Red

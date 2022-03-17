@@ -48,7 +48,7 @@ enum dayOfWeek
 
 enum monthOfYear
 {
-    January,
+    January = 1,
     February,
     March,
     April,
