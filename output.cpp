@@ -72,6 +72,82 @@ void myPrintLowFont(Point location, const std::string str)
     }
 }
 
+void myPrintDayLowFont(Point location, const std::string str)
+{
+    int x = location.x;
+    int y = location.y;
+    int ix;
+    int cx      = 0;
+    int cy      = 0;
+    int charpos = 0;
+
+    if (str.size() > 20)
+        return;
+
+    for (ix = 0; ix < str.size(); ix++)
+    {
+        // Search for the char
+        int chidx = str[ix];
+        int chidv = chidx;
+        int chsize;
+        int choffset;
+        int chheigth;
+        if (chidv < 'a')
+        {
+            chidx    = chidx - forte_24ptFontInfo.startChar;
+            chsize   = forte_24ptDescriptors[chidx].widthBits;
+            choffset = forte_24ptDescriptors[chidx].offset;
+            chheigth = forte_24ptDescriptors[chidx].heightBits;
+        }
+        else
+        {
+            chidx    = chidx - forte_12ptFontInfo.startChar;
+            chsize   = forte_12ptDescriptors[chidx].widthBits;
+            choffset = forte_12ptDescriptors[chidx].offset;
+            chheigth = forte_12ptDescriptors[chidx].heightBits;
+        }
+
+        if (chsize != 0)
+        {
+            for (int hh = 0; hh < chheigth; hh++)
+            {
+                int byteOfs = (hh * ((chsize + 7) / 8));
+
+                for (int chlen = 0; chlen < chsize; chlen++)
+                {
+                    int pbyte;
+                    if (chidv < 'a')
+                        pbyte = forte_24ptBitmaps[byteOfs + choffset + (chlen / 8)];
+                    else
+                        pbyte = forte_12ptBitmaps[byteOfs + choffset + (chlen / 8)];
+
+                    int chshift = chlen % 8;
+                    if ((pbyte << chshift) & 0x80)
+                        pico_display.pixel(Point(x + cx, y + cy));
+                    cx++;
+                }
+                cx = charpos;
+                cy++;
+            }
+        }
+        charpos += chsize + 2;
+        cx = charpos;
+        cy = 0;
+    }
+}
+
+int getStrLenLowFont(const std::string str)
+{
+    int strLen = 0;
+    for (int ix = 0; ix < str.size(); ix++)
+    {
+        int chidx = str[ix];
+        chidx     = chidx - forte_24ptFontInfo.startChar;
+        strLen += forte_24ptDescriptors[chidx].widthBits + 2;
+    }
+    return strLen;
+}
+
 void myPrintLine(Point start, Point end, int r, int g, int b)
 {
     Point s = start;
@@ -254,27 +330,41 @@ void updateDisplay(void)
 
     sprintf(yearStr, "%d", t.year);
 
+// Format : dotw day month
+//               year
+// First row : 120
+// First digit : 0
+    int ver = 120;
+    int hor = 160 - ((getStrLenLowFont(dowStr) + getStrLenLowFont(dayStr)) / 2);
+
+    if (t.dotw == Sunday)
+        pico_display.set_pen(255, 0, 0); // Red
+    else
+        pico_display.set_pen(255, 255, 255);
+    myPrintLowFont(Point(hor, ver), dowStr);
+    hor += getStrLenLowFont(dowStr) + 10;
+
     if ((dState == ClockSetup) && (sState == Day))
         pico_display.set_pen(0, 255, 0);
     else
         pico_display.set_pen(255, 255, 255);
-    myPrintLowFont(Point(5, 120), dayStr);
+    myPrintDayLowFont(Point(hor, ver), dayStr);
+
+    ver = 160;
+    hor = 160 - ((getStrLenLowFont(montStr) + getStrLenLowFont(yearStr)) / 2);
 
     if ((dState == ClockSetup) && (sState == Month))
         pico_display.set_pen(0, 255, 0);
     else
         pico_display.set_pen(255, 255, 255);
-    myPrintLowFont(Point(160, 120), montStr);
-    if (t.dotw == Sunday)
-        pico_display.set_pen(255, 0, 0); // Red
-    else
-        pico_display.set_pen(255, 255, 255);
-    myPrintLowFont(Point(5, 160), dowStr);
+    myPrintLowFont(Point(hor, ver), montStr);
+    hor += getStrLenLowFont(montStr) + 10;
+
     if ((dState == ClockSetup) && (sState == Year))
         pico_display.set_pen(0, 255, 0);
     else
         pico_display.set_pen(255, 255, 255);
-    myPrintLowFont(Point(160, 160), yearStr);
+    myPrintLowFont(Point(hor, ver), yearStr);
 
     if (dState == ClockSetup)
     {
@@ -328,3 +418,4 @@ void from_hsv(float h, float s, float v, uint8_t &r, uint8_t &g, uint8_t &b)
         break;
     }
 }
+
