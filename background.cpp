@@ -3,13 +3,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <vector>
 #include <time.h>
+#include <vector>
 
 #include "main.hpp"
+#include "output.hpp"
 #include "pico/stdlib.h"
 #include "pico_display_2.hpp"
-#include "output.hpp"
 
 // It was 100 baloons, but for half screen we change to 50
 #define OBJECTS 50
@@ -31,11 +31,16 @@ void initialise_bg(void)
         shape.pen =
             pico_display.create_pen(rand() % 255, rand() % 255, rand() % 255);
         shapes.push_back(shape);
+        shape.upDn  = true;
+        shape.shine = float(rand() % 255) / 32.0f;
     }
 }
 
 void draw_background(void)
 {
+    static uint16_t counter;
+
+    counter++;
     for (auto &shape : shapes)
     {
         if (background == Balloons)
@@ -73,9 +78,16 @@ void draw_background(void)
             // Let's slowly move the stars from right to left
             shape.x -= 6 / 3600.0;
 
-            shape.r += shape.dx;
-            int cross = shape.r % 6;
-            int diag = cross / 2;
+            if (shape.upDn == true)
+                shape.shine += (shape.dx * 0.1);
+            else
+                shape.shine -= (shape.dx * 0.1);
+
+            if (abs(shape.shine) > 5.0f)
+                shape.upDn = (shape.upDn == true) ? false : true;
+
+            int cross = int(abs(shape.shine));
+            int diag  = cross / 2;
 
             if (shape.x < 5)
             {

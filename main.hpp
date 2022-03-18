@@ -14,6 +14,8 @@ struct pt
     uint8_t  r;
     float    dx;
     float    dy;
+    float    shine;
+    bool     upDn;
     uint16_t pen;
 };
 
