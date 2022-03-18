@@ -70,20 +70,24 @@ void draw_background(void)
             // Let's slowly move the stars from right to left
             shape.x += 6 / 3600.0;
 
+            shape.r += shape.dx;
+            int cross = shape.r % 6;
+            int diag = cross / 2;
+
             if ((shape.x + 5) >= (pico_display.bounds.w))
             {
                 shape.x = 5;
             }
 
             pico_display.set_pen(255, 255, 0); // Shining yellow
-            pico_display.line(Point(shape.x - 5, shape.y),
-                              Point(shape.x + 5, shape.y));
-            pico_display.line(Point(shape.x, shape.y - 5),
-                              Point(shape.x, shape.y + 5));
-            pico_display.line(Point(shape.x - 3, shape.y - 3),
-                              Point(shape.x + 3, shape.y + 3));
-            pico_display.line(Point(shape.x - 3, shape.y + 3),
-                              Point(shape.x + 3, shape.y - 3));
+            pico_display.line(Point(shape.x - cross, shape.y),
+                              Point(shape.x + cross, shape.y));
+            pico_display.line(Point(shape.x, shape.y - cross),
+                              Point(shape.x, shape.y + cross));
+            pico_display.line(Point(shape.x - diag, shape.y - diag),
+                              Point(shape.x + diag, shape.y + diag));
+            pico_display.line(Point(shape.x - diag, shape.y + diag),
+                              Point(shape.x + diag, shape.y - diag));
             pico_display.circle(Point(shape.x, shape.y), 2);
         }
     }
