@@ -157,8 +157,8 @@ int getStrLenDayLowFont(const std::string str)
         int chidv = chidx;
         if (chidv < 'a')
         {
-        chidx     = chidx - forte_24ptFontInfo.startChar;
-        strLen += forte_24ptDescriptors[chidx].widthBits + 2;
+            chidx = chidx - forte_24ptFontInfo.startChar;
+            strLen += forte_24ptDescriptors[chidx].widthBits + 2;
         }
         else
         {
@@ -351,17 +351,22 @@ void updateDisplay(void)
 
     sprintf(yearStr, "%d", t.year);
 
-// Format : dotw day month
-//               year
-// First row : 120
-// First digit : 0
+    // Format : dotw day month
+    //               year
+    // First row : 120
+    // First digit : 0
     int ver = 120;
     int hor = 160 - ((getStrLenLowFont(dowStr) + getStrLenDayLowFont(dayStr)) / 2);
 
-    if (t.dotw == Sunday)
-        pico_display.set_pen(255, 0, 0); // Red
+    if ((dState == ClockSetup) && (sState == Dotw))
+        pico_display.set_pen(0, 255, 0);
     else
-        pico_display.set_pen(255, 255, 255);
+    {
+        if (t.dotw == Sunday)
+            pico_display.set_pen(255, 0, 0); // Red
+        else
+            pico_display.set_pen(255, 255, 255);
+    }
     myPrintLowFont(Point(hor, ver), dowStr);
     hor += getStrLenLowFont(dowStr) + 10;
 
@@ -439,4 +444,3 @@ void from_hsv(float h, float s, float v, uint8_t &r, uint8_t &g, uint8_t &b)
         break;
     }
 }
-

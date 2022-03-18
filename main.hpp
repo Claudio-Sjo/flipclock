@@ -31,6 +31,7 @@ enum setupState
     Hours,
     Minutes,
     Day,
+    Dotw,
     Month,
     Year
 };

@@ -1,8 +1,10 @@
 #include <cstdlib>
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <vector>
+#include <time.h>
 
 #include "main.hpp"
 #include "pico/stdlib.h"
@@ -20,6 +22,7 @@ void initialise_bg(void)
     for (int i = 0; i < OBJECTS; i++)
     {
         pt shape;
+
         shape.x  = rand() % (pico_display.bounds.w);
         shape.y  = rand() % w2dwn;
         shape.r  = (rand() % 10) + 3;
@@ -68,15 +71,16 @@ void draw_background(void)
         if (background == Stars)
         {
             // Let's slowly move the stars from right to left
-            shape.x += 6 / 3600.0;
+            shape.x -= 6 / 3600.0;
 
             shape.r += shape.dx;
             int cross = shape.r % 6;
             int diag = cross / 2;
 
-            if ((shape.x + 5) >= (pico_display.bounds.w))
+            if (shape.x < 5)
             {
-                shape.x = 5;
+                shape.x = rand() % (pico_display.bounds.w);
+                shape.y = rand() % w2dwn;
             }
 
             pico_display.set_pen(255, 255, 0); // Shining yellow
@@ -88,7 +92,7 @@ void draw_background(void)
                               Point(shape.x + diag, shape.y + diag));
             pico_display.line(Point(shape.x - diag, shape.y + diag),
                               Point(shape.x + diag, shape.y - diag));
-            pico_display.circle(Point(shape.x, shape.y), 2);
+            pico_display.circle(Point(shape.x, shape.y), 1);
         }
     }
 }

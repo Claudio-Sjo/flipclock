@@ -67,7 +67,11 @@ void menuHandler(Key pressed)
                 }
                 if (++t.day > maxday)
                     t.day = 1;
-                t.dotw = (t.day - 1) % 7;
+            }
+            break;
+            case Dotw:
+            {
+                t.dotw = (t.dotw + 1) % 7;
             }
             break;
             case Month:
@@ -114,11 +118,19 @@ void menuHandler(Key pressed)
                     maxday = (t.year % 4) ? 28 : 29;
                     break;
                 }
-                if (t.day == 0)
+                if (t.day == 1)
                     t.day = maxday;
                 else
                     t.day--;
                 break;
+            case Dotw:
+            {
+                if (t.dotw)
+                    t.dotw = (t.dotw - 1);
+                else
+                    t.dotw = 6;
+            }
+            break;
             case Month:
                 if (t.month == January)
                     t.month = December;
