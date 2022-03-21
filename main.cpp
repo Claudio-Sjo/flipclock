@@ -104,15 +104,16 @@ int main()
 
 #define addr       0x68
 #define add24lc65  0x50
-#define I2C_SCL    7
-#define I2C_SDA    6
+#define I2C_SCL    5    // GPIO5 
+#define I2C_SDA    4    // GPIO4
 
-    gpio_pull_up(I2C_SDA);
-    gpio_pull_up(I2C_SCL);
-    gpio_set_function(I2C_SDA, GPIO_FUNC_I2C);
-    gpio_set_function(I2C_SCL, GPIO_FUNC_I2C);
+    // gpio_pull_up(I2C_SDA);   
+    // gpio_pull_up(I2C_SCL);
+
 
     i2c_init(i2c0, 100 * 1000);
+    gpio_set_function(I2C_SDA, GPIO_FUNC_I2C);
+    gpio_set_function(I2C_SCL, GPIO_FUNC_I2C);
 
     sprintf(mainString, "mem I2C Test Program ...");
 
@@ -120,7 +121,7 @@ int main()
     uint8_t memDatar[2];
 
     int rc_w = i2c_write_mem_blocking(i2c0, add24lc65, 0, 2, memDataw, 2);
-    // int rc_r = i2c_read_mem_blocking(i2c0, add24lc65, 0, 2, memDatar, 2);
+    int rc_r = i2c_read_mem_blocking(i2c0, add24lc65, 0, 2, memDatar, 2);
 
     // Debouncing Timer
     add_repeating_timer_ms(2, Debounce, NULL, &debounceTimer);
@@ -173,7 +174,7 @@ int main()
             // rtc part
             // rtc_get_datetime(&tloc);
             // datetime_to_str(datetime_str, sizeof(datetime_buf), &tloc);
-            // sprintf(mainString, "mem i2c : %d %d %d %d", rc_w, rc_r, memDataw, memDatar);
+            sprintf(mainString, "mem i2c : %d %d %d %d", rc_w, rc_r, memDataw, memDatar);
 
             // sprintf(mainString, "%02x:%02x:%02x  ", buf[2], buf[1], buf[0]);
             pico_display.set_pen(255, 0, 0); // Red
