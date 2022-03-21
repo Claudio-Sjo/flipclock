@@ -9,7 +9,6 @@
 
 #include "background.hpp"
 #include "clock.hpp"
-#include "ds3231.hpp"
 #include "fonts/bitmap_db.h"
 #include "fonts/lowfontgen.h"
 #include "input.hpp"
@@ -19,7 +18,13 @@
 #include "pico_display_2.hpp"
 #include "ui.hpp"
 
+#include "MemI2C/memI2C.h"
+#include "hardware/clocks.h"
+#include "hardware/i2c.h"
+#include "hardware/pll.h"
 #include "hardware/rtc.h"
+#include "hardware/structs/clocks.h"
+#include "hardware/structs/pll.h"
 #include "pico/util/datetime.h"
 
 critical_section_t debounce_section;
@@ -97,15 +102,25 @@ int main()
     char  datetime_buf[256];
     char *datetime_str = &datetime_buf[0];
 
-    rtc_init();
-    rtc_set_datetime(&tloc);
+#define addr       0x68
+#define add24lc65  0x50
+#define I2C_SCL    7
+#define I2C_SDA    6
 
-    i2c_init(I2C_PORT, 100 * 1000);
-    // gpio_set_function(I2C_SDA, GPIO_FUNC_I2C);
-    // gpio_set_function(I2C_SCL, GPIO_FUNC_I2C);
-    // gpio_pull_up(I2C_SDA);
-    // gpio_pull_up(I2C_SCL);
-    sprintf(mainString, "DS3231 Test Program ...\n\n");
+    gpio_pull_up(I2C_SDA);
+    gpio_pull_up(I2C_SCL);
+    gpio_set_function(I2C_SDA, GPIO_FUNC_I2C);
+    gpio_set_function(I2C_SCL, GPIO_FUNC_I2C);
+
+    i2c_init(i2c0, 100 * 1000);
+
+    sprintf(mainString, "mem I2C Test Program ...");
+
+    uint8_t memDataw[] = "ab";
+    uint8_t memDatar[2];
+
+    int rc_w = i2c_write_mem_blocking(i2c0, add24lc65, 0, 2, memDataw, 2);
+    // int rc_r = i2c_read_mem_blocking(i2c0, add24lc65, 0, 2, memDatar, 2);
 
     // Debouncing Timer
     add_repeating_timer_ms(2, Debounce, NULL, &debounceTimer);
@@ -113,6 +128,15 @@ int main()
     add_repeating_timer_ms(50, oneTwenthCallback, NULL, &oneTwenthtimer);
 
     initialise_bg();
+
+    // Test 32kHz
+    gpio_pull_up(22);
+    clock_configure_gpin(clk_rtc, 22, 32768, 32768);
+
+    rtc_init();
+    rtc_set_datetime(&tloc);
+
+    uint32_t fRead = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_CLK_RTC);
 
     while (true)
     {
@@ -139,17 +163,17 @@ int main()
             updateDisplay();
 
             // ds3231ReadTime();
-            buf[0] = buf[0] & 0x7F; // sec
-            buf[1] = buf[1] & 0x7F; // min
-            buf[2] = buf[2] & 0x3F; // hour
-            buf[3] = buf[3] & 0x07; // week
-            buf[4] = buf[4] & 0x3F; // day
-            buf[5] = buf[5] & 0x1F; // mouth
+            // buf[0] = buf[0] & 0x7F; // sec
+            // buf[1] = buf[1] & 0x7F; // min
+            // buf[2] = buf[2] & 0x3F; // hour
+            // buf[3] = buf[3] & 0x07; // week
+            // buf[4] = buf[4] & 0x3F; // day
+            // buf[5] = buf[5] & 0x1F; // mouth
 
             // rtc part
-            rtc_get_datetime(&tloc);
-            datetime_to_str(datetime_str, sizeof(datetime_buf), &tloc);
-            sprintf(mainString, "%s", datetime_str);
+            // rtc_get_datetime(&tloc);
+            // datetime_to_str(datetime_str, sizeof(datetime_buf), &tloc);
+            // sprintf(mainString, "mem i2c : %d %d %d %d", rc_w, rc_r, memDataw, memDatar);
 
             // sprintf(mainString, "%02x:%02x:%02x  ", buf[2], buf[1], buf[0]);
             pico_display.set_pen(255, 0, 0); // Red
