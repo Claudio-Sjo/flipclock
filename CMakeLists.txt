@@ -1,11 +1,11 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.13)
 
 # Change your executable name to something creative!
 set(NAME flipclock) # <-- Name your project/executable here!
 
 include(pimoroni_pico_import.cmake)
 include(pico_sdk_import.cmake)
-# include(ds3231/CMakeLists.txt)
+#include(MemI2C/CMakeLists.txt)
 
 # Gooey boilerplate
 project(${NAME} C CXX ASM)
@@ -23,8 +23,9 @@ add_executable(${NAME}
     ui.cpp 
     clock.cpp
     background.cpp 
-    ds3231.cpp
 )
+
+add_subdirectory( MemI2C )
 
 # Include required libraries
 # This assumes `pimoroni-pico` is stored alongside your project
@@ -49,3 +50,4 @@ install(FILES
 set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY OFF)
 set(CPACK_GENERATOR "ZIP" "TGZ")
 include(CPack)
+
