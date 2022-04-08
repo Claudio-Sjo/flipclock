@@ -71,7 +71,7 @@ void update_bground(uint32_t hh, uint32_t mm)
 {
     // Depending on the hour, we decide to have one or more windows
     // During the night there's only one window w1
-    if ((hh <= 6) && (hh > 19))
+    if ((hh <= 6) || (hh > 19))
     {
         bground.bglight = 128;
         bground.w1bv    = 0;
