@@ -18,6 +18,7 @@
 #include "pico_display_2.hpp"
 #include "ui.hpp"
 
+#include "DS3231_HAL/DS3231_HAL.h"
 #include "MemI2C/memI2C.h"
 #include "hardware/clocks.h"
 #include "hardware/i2c.h"
@@ -67,7 +68,6 @@ int main()
     critical_section_init(&debounce_section);
 
     pico_display.init();
-    pico_display.set_backlight(128); // was 255
 
     struct repeating_timer debounceTimer;
 
@@ -102,14 +102,13 @@ int main()
     char  datetime_buf[256];
     char *datetime_str = &datetime_buf[0];
 
-#define addr       0x68
-#define add24lc65  0x50
-#define I2C_SCL    5    // GPIO5 
-#define I2C_SDA    4    // GPIO4
+#define addr      0x68
+#define add24lc65 0x50
+#define I2C_SCL   5 // GPIO5
+#define I2C_SDA   4 // GPIO4
 
-    // gpio_pull_up(I2C_SDA);   
+    // gpio_pull_up(I2C_SDA);
     // gpio_pull_up(I2C_SCL);
-
 
     i2c_init(i2c0, 100 * 1000);
     gpio_set_function(I2C_SDA, GPIO_FUNC_I2C);
@@ -121,6 +120,7 @@ int main()
     uint8_t memDatar[2];
 
     int rc_w = i2c_write_mem_blocking(i2c0, add24lc65, 0, 2, memDataw, 2);
+    sleep_ms(10);
     int rc_r = i2c_read_mem_blocking(i2c0, add24lc65, 0, 2, memDatar, 2);
 
     // Debouncing Timer
@@ -130,9 +130,14 @@ int main()
 
     initialise_bg();
 
-    // Test 32kHz
-    gpio_pull_up(22);
-    clock_configure_gpin(clk_rtc, 22, 32768, 32768);
+    /*
+        // Test 32kHz
+        gpio_pull_up(22);
+        clock_configure_gpin(clk_rtc, 22, 32768, 32768);
+    */
+    // Test DS3231 Clock
+    bool DS3231res = InitRtc(NULL, RtcIntSqwOff, i2c0);
+    GetRtcTime(&tloc);
 
     rtc_init();
     rtc_set_datetime(&tloc);
@@ -145,8 +150,6 @@ int main()
 
         if (oldsk != scheduler)
         {
-            pico_display.set_pen(0, 0, 100); // Dark Blue
-            pico_display.clear();
 
             draw_background();
 

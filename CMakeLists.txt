@@ -5,7 +5,6 @@ set(NAME flipclock) # <-- Name your project/executable here!
 
 include(pimoroni_pico_import.cmake)
 include(pico_sdk_import.cmake)
-#include(MemI2C/CMakeLists.txt)
 
 # Gooey boilerplate
 project(${NAME} C CXX ASM)
@@ -26,6 +25,7 @@ add_executable(${NAME}
 )
 
 add_subdirectory( MemI2C )
+add_subdirectory( DS3231_HAL )
 
 # Include required libraries
 # This assumes `pimoroni-pico` is stored alongside your project

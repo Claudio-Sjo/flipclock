@@ -1,4 +1,5 @@
 // Filename clock.cpp
+#include "DS3231_HAL/DS3231_HAL.h"
 #include "fonts/bitmap_db.h"
 #include "fonts/lowfontgen.h"
 #include "hardware/rtc.h"
@@ -138,8 +139,11 @@ bool oneTwenthCallback(struct repeating_timer *rt)
         scheduler = 0;
     }
     if ((oldState == ClockSetup) && (dState == Clock))
+    {
         rtc_set_datetime(&t);
+        SetRtcTime(&t);
+    }
     oldState = dState;
-    
+
     return true;
 }

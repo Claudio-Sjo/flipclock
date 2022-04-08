@@ -7,6 +7,7 @@
 #include <string.h>
 #include <vector>
 
+
 struct pt
 {
     float    x;
