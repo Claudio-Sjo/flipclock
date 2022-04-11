@@ -23,6 +23,7 @@
 #define BALLONS 20
 #define STARS   50
 #define OBJECTS MAX(BALLONS, STARS)
+#define ONEMINUTE   (60 * 1000)     // in milliseconds
 
 std::vector<pt> shapes;
 
@@ -170,7 +171,7 @@ void initialise_bg(void)
         shape.upDn  = true;
         shape.shine = float(rand() % 255) / 64.0f;
     }
-    add_repeating_timer_ms(50, oneMinuteCallback, NULL, &oneMinuteTimer);
+    add_repeating_timer_ms(ONEMINUTE, oneMinuteCallback, NULL, &oneMinuteTimer);
 }
 
 void draw_background(void)
