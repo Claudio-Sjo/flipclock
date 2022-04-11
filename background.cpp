@@ -20,50 +20,46 @@
 // During the day from time to time birds will move around and clouds will be up in the sky
 // During the night the moon will move as the sun in the day with stars shining
 // It was 100 baloons, but for half screen we change to 50
-#define BALLONS 20
-#define STARS   50
-#define OBJECTS MAX(BALLONS, STARS)
-#define ONEMINUTE   (60 * 1000)     // in milliseconds
+#define BALLONS   20
+#define STARS     50
+#define OBJECTS   MAX(BALLONS, STARS)
+#define ONEMINUTE (60 * 1000) // in milliseconds
 
 std::vector<pt> shapes;
 
-bgEnum                 background = Stars;
+uint32_t sunrise    = 6;
+uint32_t sunset     = 19;
+bgEnum   background = Stars;
 
 struct repeating_timer oneMinuteTimer;
 
-typedef struct _bgscreen
+typedef struct rgb_type
+{
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+} rgb_t;
+
+rgb_t colors[] = {
+    {34, 0, 102},   // Midnight Blue
+    {0, 0, 128},    // Navy Blue
+    {0, 30, 179},   // Zapphre
+    {0, 68, 204},   // Sapphire
+    {0, 115, 230},  // True Blue
+    {0, 128, 255},  // Azure
+    {25, 178, 255}, // Spiro Disco Blue
+    {51, 187, 255},
+    {77, 195, 255},
+    {102, 204, 255},
+    {128, 212, 255},
+};
+
+typedef struct bgscreen_type
 {
     uint8_t  bglight;
     uint16_t sunPosH;
     uint16_t sunPosV;
-    uint16_t w1bh;
-    uint16_t w1bv;
-    uint16_t w1eh;
-    uint16_t w1ev;
-    uint8_t  w1r;
-    uint8_t  w1g;
-    uint8_t  w1b;
-    uint16_t w2bh;
-    uint16_t w2bv;
-    uint16_t w2eh;
-    uint16_t w2ev;
-    uint8_t  w2r;
-    uint8_t  w2g;
-    uint8_t  w2b;
-    uint16_t w3bh;
-    uint16_t w3bv;
-    uint16_t w3eh;
-    uint16_t w3ev;
-    uint8_t  w3r;
-    uint8_t  w3g;
-    uint8_t  w3b;
-    uint16_t w4bh;
-    uint16_t w4bv;
-    uint16_t w4eh;
-    uint16_t w4ev;
-    uint8_t  w4r;
-    uint8_t  w4g;
-    uint8_t  w4b;
+    rgb_t    w1color;
 } bgscreen;
 
 bgscreen bground;
@@ -72,90 +68,75 @@ void update_bground(uint32_t hh, uint32_t mm)
 {
     // Depending on the hour, we decide to have one or more windows
     // During the night there's only one window w1
-    if ((hh <= 6) || (hh > 19))
+    if ((hh <= (sunrise - 1)) || (hh > (sunset + 1)))
     {
         bground.bglight = 128;
-        bground.w1bv    = 0;
-        bground.w1bh    = 0;
-        bground.w1ev    = 240;
-        bground.w1eh    = 320;
-        bground.w1r     = 0;
-        bground.w1g     = 0;
-        bground.w1b     = 100;
-        bground.w2bh = bground.w2eh = bground.w2bv = bground.w2ev = 0;
-        bground.w3bh = bground.w3eh = bground.w3bv = bground.w3ev = 0;
-        bground.w4bh = bground.w4eh = bground.w4bv = bground.w4ev = 0;
-        background                                                = Stars;
+        bground.w1color = colors[0];
+        background      = Stars;
     }
-    if ((hh > 6) && (hh <= 9))
+    if ((hh > (sunrise - 1)) && (hh <= sunrise))
     {
         int totMinutes = 60 * (hh - 6) + mm;
 
-        bground.bglight = 128 + (128 / 4) * (hh - 6);
-        bground.w1bh = bground.w1bv = 0;
-        bground.w1ev                = 240;
-        bground.w1eh                = totMinutes;
-        bground.w1r                 = 128;
-        bground.w1g                 = 212;
-        bground.w1b                 = 255;
-        bground.w2bv                = 0;
-        bground.w2bh                = bground.w1eh;
-        bground.w2ev                = 240;
-        bground.w2eh                = 320;
-        bground.w2r                 = 0;
-        bground.w2g                 = 0;
-        bground.w2b                 = 100;
-        bground.w3bh = bground.w3eh = bground.w3bv = bground.w3ev = 0;
-        bground.w4bh = bground.w4eh = bground.w4bv = bground.w4ev = 0;
-        background = Balloons;
+        bground.bglight = 128;
+        bground.w1color = colors[mm / 6];
+        background      = Stars;
     }
-    if ((hh > 9) && (hh <= 16))
+    if ((hh > (sunrise)) && (hh <= sunrise + 1))
+    {
+        int totMinutes = 60 * (hh - 6) + mm;
+
+        bground.bglight = 128 + (mm * 2);
+        bground.w1color = colors[10];
+        background      = Balloons;
+    }
+    if ((hh > sunrise + 1) && (hh <= sunset - 1))
     {
         bground.bglight = 255;
-        bground.w1bh = bground.w1eh = bground.w1bv = bground.w1ev = 0;
-        bground.w2bv                                              = 0;
-        bground.w2bh                                              = 0;
-        bground.w2ev                                              = 240;
-        bground.w2eh                                              = 320;
-        bground.w2r                                               = 128;
-        bground.w2g                                               = 212;
-        bground.w2b                                               = 255;
-        bground.w3bh = bground.w3eh = bground.w3bv = bground.w3ev = 0;
-        bground.w4bh = bground.w4eh = bground.w4bv = bground.w4ev = 0;
-        background                                                = Balloons;
+        bground.w1color = colors[10];
+        background      = Balloons;
     }
-    if ((hh > 16) && (hh <= 19))
+    if ((hh > sunset - 1) && (hh <= sunset))
     {
-        int totMinutes  = 60 * (hh - 16) + mm;
+        int totMinutes = 60 * (hh - 6) + mm;
 
-        bground.bglight = bground.bglight = 255 - (128 / 4) * (hh - 6);
-        bground.w1bh = bground.w1bv                               = 0;
-        bground.w1ev                                              = 240;
-        bground.w1eh                                              = 140 + totMinutes;
-        bground.w1r                                               = 0;
-        bground.w1g                                               = 0;
-        bground.w1b                                               = 100;
-        bground.w2bv                                              = 0;
-        bground.w2bh                                              = bground.w1eh;
-        bground.w2ev                                              = 240;
-        bground.w2eh                                              = 320;
-        bground.w2r                                               = 128;
-        bground.w2g                                               = 212;
-        bground.w2b                                               = 255;
-        bground.w3bh = bground.w3eh = bground.w3bv = bground.w3ev = 0;
-        bground.w4bh = bground.w4eh = bground.w4bv = bground.w4ev = 0;
-        background                                                = Balloons;
+        bground.bglight = 128 + ((60 - mm) * 2);
+        bground.w1color = colors[10];
+        background      = Balloons;
+    }
+    if ((hh > (sunset)) && (hh <= sunset + 1))
+    {
+        int totMinutes = 60 * (hh - 6) + mm;
+
+        bground.bglight = 128;
+        bground.w1color = colors[(60 - mm) / 6];
+        background      = Stars;
     }
 }
 
 bool oneMinuteCallback(struct repeating_timer *rt)
 {
     update_bground(t.hour, t.min);
+    /* Testing the updates a bit faster than on real time
+    static uint32_t hh = 0;
+    static uint32_t mm = 0;
+
+    if (++mm > 59)
+    {
+        mm = 0;
+        if (++hh > 24)
+        {
+            hh = 0;
+        }
+    }
+    update_bground(hh, mm);
+     End of test part */
     return true;
 }
 
 void initialise_bg(void)
 {
+
     for (int i = 0; i < OBJECTS; i++)
     {
         pt shape;
@@ -172,6 +153,7 @@ void initialise_bg(void)
         shape.shine = float(rand() % 255) / 64.0f;
     }
     add_repeating_timer_ms(ONEMINUTE, oneMinuteCallback, NULL, &oneMinuteTimer);
+    update_bground(t.hour, t.min);
 }
 
 void draw_background(void)
@@ -180,59 +162,9 @@ void draw_background(void)
 
     pico_display.set_backlight(bground.bglight); // was 255
 
+    pico_display.set_pen(bground.w1color.r, bground.w1color.g, bground.w1color.b);
+
     pico_display.clear();
-
-    if (bground.w1ev != 0)
-    {
-        pico_display.set_pen(bground.w1r, bground.w1g, bground.w1b); // Dark Blue
-
-        std::vector<Point> poly;
-        poly.push_back(Point(bground.w1bh, bground.w1bv));
-        poly.push_back(Point(bground.w1eh, bground.w1bv));
-        poly.push_back(Point(bground.w1eh, bground.w1ev));
-        poly.push_back(Point(bground.w1bh, bground.w1ev));
-
-        pico_display.polygon(poly);
-    }
-
-    if (bground.w2ev != 0)
-    {
-        pico_display.set_pen(bground.w2r, bground.w2g, bground.w2b); // Dark Blue
-
-        std::vector<Point> poly;
-        poly.push_back(Point(bground.w2bh, bground.w2bv));
-        poly.push_back(Point(bground.w2eh, bground.w2bv));
-        poly.push_back(Point(bground.w2eh, bground.w2ev));
-        poly.push_back(Point(bground.w2bh, bground.w2ev));
-
-        pico_display.polygon(poly);
-    }
-
-    if (bground.w3ev != 0)
-    {
-        pico_display.set_pen(bground.w3r, bground.w3g, bground.w3b); // Dark Blue
-
-        std::vector<Point> poly;
-        poly.push_back(Point(bground.w3bh, bground.w3bv));
-        poly.push_back(Point(bground.w3eh, bground.w3bv));
-        poly.push_back(Point(bground.w3eh, bground.w3ev));
-        poly.push_back(Point(bground.w3bh, bground.w3ev));
-
-        pico_display.polygon(poly);
-    }
-
-    if (bground.w4ev != 0)
-    {
-        pico_display.set_pen(bground.w4r, bground.w4g, bground.w4b); // Dark Blue
-
-        std::vector<Point> poly;
-        poly.push_back(Point(bground.w4bh, bground.w4bv));
-        poly.push_back(Point(bground.w4eh, bground.w4bv));
-        poly.push_back(Point(bground.w4eh, bground.w4ev));
-        poly.push_back(Point(bground.w4bh, bground.w4ev));
-
-        pico_display.polygon(poly);
-    }
 
     counter++;
     for (auto &shape : shapes)

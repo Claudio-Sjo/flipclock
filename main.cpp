@@ -89,16 +89,6 @@ int main()
 
     // rtc related part
 
-    // Start on Friday 5th of June 2020 15:45:00
-    datetime_t tloc = {
-        .year  = 2020,
-        .month = 06,
-        .day   = 05,
-        .dotw  = 5, // 0 is Sunday, so 5 is Friday
-        .hour  = 15,
-        .min   = 45,
-        .sec   = 00};
-
     char  datetime_buf[256];
     char *datetime_str = &datetime_buf[0];
 
@@ -128,7 +118,6 @@ int main()
 
     add_repeating_timer_ms(50, oneTwenthCallback, NULL, &oneTwenthtimer);
 
-    initialise_bg();
 
     /*
         // Test 32kHz
@@ -137,10 +126,12 @@ int main()
     */
     // Test DS3231 Clock
     bool DS3231res = InitRtc(NULL, RtcIntSqwOff, i2c0);
-    GetRtcTime(&tloc);
+    GetRtcTime(&t);
 
     rtc_init();
-    rtc_set_datetime(&tloc);
+    rtc_set_datetime(&t);
+
+    initialise_bg();
 
     uint32_t fRead = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_CLK_RTC);
 
