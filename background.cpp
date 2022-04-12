@@ -24,6 +24,7 @@
 #define STARS     50
 #define OBJECTS   MAX(BALLONS, STARS)
 #define ONEMINUTE (60 * 1000) // in milliseconds
+#define PAINT     (8 * 1000)  // in milliseconds
 
 std::vector<pt> shapes;
 
@@ -32,6 +33,7 @@ uint32_t sunset     = 19;
 bgEnum   background = Stars;
 
 struct repeating_timer oneMinuteTimer;
+struct repeating_timer paintTimer;
 
 typedef struct rgb_type
 {
@@ -63,8 +65,9 @@ typedef struct bgscreen_type
 } bgscreen;
 
 bgscreen bground;
+bgscreen currBground;
 
-void update_bground(uint32_t hh, uint32_t mm)
+void update_bground_target(uint32_t hh, uint32_t mm)
 {
     // Depending on the hour, we decide to have one or more windows
     // During the night there's only one window w1
@@ -76,17 +79,14 @@ void update_bground(uint32_t hh, uint32_t mm)
     }
     if ((hh > (sunrise - 1)) && (hh <= sunrise))
     {
-        int totMinutes = 60 * (hh - 6) + mm;
-
         bground.bglight = 128;
-        bground.w1color = colors[mm / 6];
+        bground.w1color = colors[10];
         background      = Stars;
     }
     if ((hh > (sunrise)) && (hh <= sunrise + 1))
     {
-        int totMinutes = 60 * (hh - 6) + mm;
 
-        bground.bglight = 128 + (mm * 2);
+        bground.bglight = 255;
         bground.w1color = colors[10];
         background      = Balloons;
     }
@@ -98,25 +98,54 @@ void update_bground(uint32_t hh, uint32_t mm)
     }
     if ((hh > sunset - 1) && (hh <= sunset))
     {
-        int totMinutes = 60 * (hh - 6) + mm;
 
-        bground.bglight = 128 + ((60 - mm) * 2);
+        bground.bglight = 128 ;
         bground.w1color = colors[10];
         background      = Balloons;
     }
     if ((hh > (sunset)) && (hh <= sunset + 1))
     {
-        int totMinutes = 60 * (hh - 6) + mm;
 
         bground.bglight = 128;
-        bground.w1color = colors[(60 - mm) / 6];
+        bground.w1color = colors[0];
         background      = Stars;
     }
 }
 
+// paintCallback does change the background color smoothly
+bool paintCallback(struct repeating_timer *rt)
+{
+    // Let's start with the brightness
+    if (bground.bglight != currBground.bglight)
+    {
+        currBground.bglight = (bground.bglight > currBground.bglight) ? currBground.bglight + 1 : currBground.bglight - 1;
+    }
+    // Let's continue with colors, here we need to prioritize red at sunrise and sunset
+    if (bground.w1color.r != currBground.w1color.r)
+    {
+        currBground.w1color.r = (bground.w1color.r > currBground.w1color.r) ? currBground.w1color.r + 1 : currBground.w1color.r - 1;
+    }
+    else
+    {
+        if (bground.w1color.b != currBground.w1color.b)
+        {
+            currBground.w1color.b = (bground.w1color.b > currBground.w1color.b) ? currBground.w1color.b + 1 : currBground.w1color.b - 1;
+        }
+        else
+        {
+            if (bground.w1color.g != currBground.w1color.g)
+            {
+                currBground.w1color.g = (bground.w1color.g > currBground.w1color.g) ? currBground.w1color.g + 1 : currBground.w1color.g - 1;
+            }
+        }
+    }
+
+    return true;
+}
+
 bool oneMinuteCallback(struct repeating_timer *rt)
 {
-    update_bground(t.hour, t.min);
+    update_bground_target(t.hour, t.min);
     /* Testing the updates a bit faster than on real time
     static uint32_t hh = 0;
     static uint32_t mm = 0;
@@ -152,17 +181,26 @@ void initialise_bg(void)
         shape.upDn  = true;
         shape.shine = float(rand() % 255) / 64.0f;
     }
+
+    bground.bglight = currBground.bglight = 128;
+    bground.sunPosH = currBground.sunPosH = 0;
+    bground.sunPosV = currBground.sunPosV = 0;
+
+    bground.w1color.r = currBground.w1color.r = 0;
+    bground.w1color.g = currBground.w1color.g = 0;
+    bground.w1color.b = currBground.w1color.b = 100;
+
     add_repeating_timer_ms(ONEMINUTE, oneMinuteCallback, NULL, &oneMinuteTimer);
-    update_bground(t.hour, t.min);
+    add_repeating_timer_ms(PAINT, paintCallback, NULL, &paintTimer);
 }
 
 void draw_background(void)
 {
     static uint16_t counter;
 
-    pico_display.set_backlight(bground.bglight); // was 255
+    pico_display.set_backlight(currBground.bglight); // was 255
 
-    pico_display.set_pen(bground.w1color.r, bground.w1color.g, bground.w1color.b);
+    pico_display.set_pen(currBground.w1color.r, currBground.w1color.g, currBground.w1color.b);
 
     pico_display.clear();
 
