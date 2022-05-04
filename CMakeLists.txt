@@ -22,6 +22,7 @@ add_executable(${NAME}
     ui.cpp 
     clock.cpp
     background.cpp 
+    sunutils.cpp
 )
 
 add_subdirectory( MemI2C )

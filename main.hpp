@@ -68,8 +68,8 @@ enum monthOfYear
 
 typedef enum backGround
 {
-    Balloons,
-    Stars
+    DayLight,
+    NigthLigth
 } bgEnum;
 
 #endif
