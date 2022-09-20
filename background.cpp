@@ -39,6 +39,19 @@ bgEnum background = NigthLigth;
 struct repeating_timer oneMinuteTimer;
 struct repeating_timer paintTimer;
 
+typedef struct sunray_type
+{
+    float_t x;
+    float_t y;
+} sunray_t;
+
+sunray_t rays[] = {
+    {1.0, 0.0},   // Angle = 0
+    {0.92, 0.38}, // Angle = 22.5
+    {0.70, 0.70}, // Angle = 45
+    {0.38, 0.92}, // Angle = 67.5
+};
+
 typedef struct rgb_type
 {
     uint8_t r;
@@ -287,62 +300,38 @@ void draw_background(void)
 
     if (background == DayLight)
     {
-        static float_t rlen = SUNSIZE;
+        static float_t rlen = 0;
 
-        int r1, r2, r3, r4, r5, r6, r7, r8;
+        int r1, r2, rs;
 
         if (bground.upDn == true)
             rlen += 0.1;
         else
             rlen -= 0.1;
 
-        if (rlen > (SUNSIZE + SUNSIZE))
+        if (rlen > (SUNSIZE))
             bground.upDn = false;
 
-        if (rlen < SUNSIZE)
+        if (rlen < 0.0)
             bground.upDn = true;
 
-        r1 = rlen + SUNSIZE / 4 ;
-        r3 = rlen;
-        r2 = (SUNSIZE + SUNSIZE) - rlen;
+        r1 = rlen + SUNSIZE + SUNSIZE / 2;
+        r2 = (SUNSIZE + SUNSIZE + SUNSIZE / 2) - rlen;
 
         pico_display.set_pen(255, 255, 0); // Shining yellow
 
         // Plot the rays
-        // r1
-        pico_display.line(Point(currBground.sunPosH - r1, currBground.sunPosV),
-                          Point(currBground.sunPosH + r1, currBground.sunPosV));
-        pico_display.line(Point(currBground.sunPosH, currBground.sunPosV - r1),
-                          Point(currBground.sunPosH, currBground.sunPosV + r1));
-        // r2
-        pico_display.line(Point(currBground.sunPosH - r2, currBground.sunPosV - r2/4),
-                          Point(currBground.sunPosH + r2, currBground.sunPosV + r2/4));
-        pico_display.line(Point(currBground.sunPosH + r2/4, currBground.sunPosV - r2),
-                          Point(currBground.sunPosH - r2/4, currBground.sunPosV + r2));
+        for (int i = 0; i < 4; i++)
+        {
+            rs = r1;
+            if (i % 2)
+                rs = r2;
 
-        // r3
-        pico_display.line(Point(currBground.sunPosH - r3 / 2, currBground.sunPosV - r3 / 2),
-                          Point(currBground.sunPosH + r3 / 2, currBground.sunPosV + r3 / 2));
-        pico_display.line(Point(currBground.sunPosH + r3 / 2, currBground.sunPosV - r3 / 2),
-                          Point(currBground.sunPosH - r3 / 2, currBground.sunPosV + r3 / 2));
-
-        // r4
-        pico_display.line(Point(currBground.sunPosH - r2/4, currBground.sunPosV - r2/4),
-                          Point(currBground.sunPosH + r2/4, currBground.sunPosV + r2/4));
-        pico_display.line(Point(currBground.sunPosH + r2/4, currBground.sunPosV - r2/4),
-                          Point(currBground.sunPosH - r2/4, currBground.sunPosV + r2/4));
-
-        // r5
-        pico_display.line(Point(currBground.sunPosH - r1, currBground.sunPosV - r1),
-                          Point(currBground.sunPosH + r1, currBground.sunPosV + r1));
-        pico_display.line(Point(currBground.sunPosH + r1, currBground.sunPosV - r1),
-                          Point(currBground.sunPosH - r1, currBground.sunPosV + r1));
-
-        // r7
-        pico_display.line(Point(currBground.sunPosH + r1 / 2, currBground.sunPosV + r1 / 2),
-                          Point(currBground.sunPosH - r1 / 2, currBground.sunPosV - r1 / 2));
-        pico_display.line(Point(currBground.sunPosH - r1 / 2, currBground.sunPosV + r1 / 2),
-                          Point(currBground.sunPosH + r1 / 2, currBground.sunPosV - r1 / 2));
+            pico_display.line(Point(currBground.sunPosH - rs * rays[i].x, currBground.sunPosV - rs * rays[i].y),
+                              Point(currBground.sunPosH + rs * rays[i].x, currBground.sunPosV + rs * rays[i].y));
+            pico_display.line(Point(currBground.sunPosH - rs * rays[i].y, currBground.sunPosV + rs * rays[i].x),
+                              Point(currBground.sunPosH + rs * rays[i].y, currBground.sunPosV - rs * rays[i].x));
+        }
 
         pico_display.set_pen(currBground.sunColor.r, currBground.sunColor.g, currBground.sunColor.b);
         pico_display.circle(Point(currBground.sunPosH, currBground.sunPosV), SUNSIZE);

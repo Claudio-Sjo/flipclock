@@ -94,13 +94,13 @@ int main()
 
 #define addr      0x68
 #define add24lc65 0x50
-#define I2C_SCL   5 // GPIO5
-#define I2C_SDA   4 // GPIO4
+#define I2C_SCL   27 // GPIO27
+#define I2C_SDA   26 // GPIO26
 
     // gpio_pull_up(I2C_SDA);
     // gpio_pull_up(I2C_SCL);
 
-    i2c_init(i2c0, 100 * 1000);
+    i2c_init(i2c1, 100 * 1000);
     gpio_set_function(I2C_SDA, GPIO_FUNC_I2C);
     gpio_set_function(I2C_SCL, GPIO_FUNC_I2C);
 
@@ -109,9 +109,9 @@ int main()
     uint8_t memDataw[] = {0x55, 0xaa};
     uint8_t memDatar[2];
 
-    int rc_w = i2c_write_mem_blocking(i2c0, add24lc65, 0, 2, memDataw, 2);
+    int rc_w = i2c_write_mem_blocking(i2c1, add24lc65, 0, 2, memDataw, 2);
     sleep_ms(10);
-    int rc_r = i2c_read_mem_blocking(i2c0, add24lc65, 0, 2, memDatar, 2);
+    int rc_r = i2c_read_mem_blocking(i2c1, add24lc65, 0, 2, memDatar, 2);
 
     // Debouncing Timer
     add_repeating_timer_ms(2, Debounce, NULL, &debounceTimer);
@@ -125,7 +125,7 @@ int main()
         clock_configure_gpin(clk_rtc, 22, 32768, 32768);
     */
     // Test DS3231 Clock
-    bool DS3231res = InitRtc(NULL, RtcIntSqwOff, i2c0);
+    bool DS3231res = InitRtc(NULL, RtcIntSqwOff, i2c1);
     GetRtcTime(&t);
 
     rtc_init();
