@@ -89,28 +89,18 @@ int main()
 
     // rtc related part
 
-    // Start on Friday 5th of June 2020 15:45:00
-    datetime_t tloc = {
-        .year  = 2020,
-        .month = 06,
-        .day   = 05,
-        .dotw  = 5, // 0 is Sunday, so 5 is Friday
-        .hour  = 15,
-        .min   = 45,
-        .sec   = 00};
-
     char  datetime_buf[256];
     char *datetime_str = &datetime_buf[0];
 
 #define addr      0x68
 #define add24lc65 0x50
-#define I2C_SCL   5 // GPIO5
-#define I2C_SDA   4 // GPIO4
+#define I2C_SCL   27 // GPIO27
+#define I2C_SDA   26 // GPIO26
 
     // gpio_pull_up(I2C_SDA);
     // gpio_pull_up(I2C_SCL);
 
-    i2c_init(i2c0, 100 * 1000);
+    i2c_init(i2c1, 100 * 1000);
     gpio_set_function(I2C_SDA, GPIO_FUNC_I2C);
     gpio_set_function(I2C_SCL, GPIO_FUNC_I2C);
 
@@ -119,16 +109,15 @@ int main()
     uint8_t memDataw[] = {0x55, 0xaa};
     uint8_t memDatar[2];
 
-    int rc_w = i2c_write_mem_blocking(i2c0, add24lc65, 0, 2, memDataw, 2);
+    int rc_w = i2c_write_mem_blocking(i2c1, add24lc65, 0, 2, memDataw, 2);
     sleep_ms(10);
-    int rc_r = i2c_read_mem_blocking(i2c0, add24lc65, 0, 2, memDatar, 2);
+    int rc_r = i2c_read_mem_blocking(i2c1, add24lc65, 0, 2, memDatar, 2);
 
     // Debouncing Timer
     add_repeating_timer_ms(2, Debounce, NULL, &debounceTimer);
 
     add_repeating_timer_ms(50, oneTwenthCallback, NULL, &oneTwenthtimer);
 
-    initialise_bg();
 
     /*
         // Test 32kHz
@@ -136,11 +125,13 @@ int main()
         clock_configure_gpin(clk_rtc, 22, 32768, 32768);
     */
     // Test DS3231 Clock
-    bool DS3231res = InitRtc(NULL, RtcIntSqwOff, i2c0);
-    GetRtcTime(&tloc);
+    bool DS3231res = InitRtc(NULL, RtcIntSqwOff, i2c1);
+    GetRtcTime(&t);
 
     rtc_init();
-    rtc_set_datetime(&tloc);
+    rtc_set_datetime(&t);
+
+    initialise_bg();
 
     uint32_t fRead = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_CLK_RTC);
 

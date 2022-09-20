@@ -18,257 +18,330 @@
 // Durung the day the sun will move from left to rigth
 // The daylight will change depending on the time
 // During the day from time to time birds will move around and clouds will be up in the sky
-// During the night the moon will move as the sun in the day with stars shining
+// During the night the moon will move as the sun in the day with Nigth shining
 // It was 100 baloons, but for half screen we change to 50
 #define BALLONS 20
-#define STARS   50
+#define STARS 50
 #define OBJECTS MAX(BALLONS, STARS)
+#define ONEMINUTE (60 * 1000) // in milliseconds
+#define PAINT (4 * 1000)      // in milliseconds
+#define SUNSIZE 20
+#define SUNSDIA (2 * SUNSIZE)
 
 std::vector<pt> shapes;
 
-bgEnum                 background = Stars;
+uint32_t sunrise = 6 * 1 + 0; // in minutes
+uint32_t sunset = 19 * 1 + 0; // in minutes
+float_t dayLength = 0.0;      // In minutes
+float_t deltaH;
+bgEnum background = NigthLigth;
 
 struct repeating_timer oneMinuteTimer;
+struct repeating_timer paintTimer;
 
-typedef struct _bgscreen
+typedef struct sunray_type
 {
-    uint8_t  bglight;
-    uint16_t sunPosH;
-    uint16_t sunPosV;
-    uint16_t w1bh;
-    uint16_t w1bv;
-    uint16_t w1eh;
-    uint16_t w1ev;
-    uint8_t  w1r;
-    uint8_t  w1g;
-    uint8_t  w1b;
-    uint16_t w2bh;
-    uint16_t w2bv;
-    uint16_t w2eh;
-    uint16_t w2ev;
-    uint8_t  w2r;
-    uint8_t  w2g;
-    uint8_t  w2b;
-    uint16_t w3bh;
-    uint16_t w3bv;
-    uint16_t w3eh;
-    uint16_t w3ev;
-    uint8_t  w3r;
-    uint8_t  w3g;
-    uint8_t  w3b;
-    uint16_t w4bh;
-    uint16_t w4bv;
-    uint16_t w4eh;
-    uint16_t w4ev;
-    uint8_t  w4r;
-    uint8_t  w4g;
-    uint8_t  w4b;
+    float_t x;
+    float_t y;
+} sunray_t;
+
+sunray_t rays[] = {
+    {1.0, 0.0},   // Angle = 0
+    {0.92, 0.38}, // Angle = 22.5
+    {0.70, 0.70}, // Angle = 45
+    {0.38, 0.92}, // Angle = 67.5
+};
+
+typedef struct rgb_type
+{
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+} rgb_t;
+
+rgb_t colors[] = {
+    {34, 0, 102},   // Midnight Blue
+    {0, 0, 128},    // Navy Blue
+    {0, 30, 179},   // Zapphre
+    {0, 68, 204},   // Sapphire
+    {0, 115, 230},  // True Blue
+    {0, 128, 255},  // Azure
+    {25, 178, 255}, // Spiro Disco Blue
+    {51, 187, 255},
+    {77, 195, 255},
+    {102, 204, 255},
+    {128, 212, 255},
+};
+
+rgb_t sunshine[] = {
+    {255, 102, 25},
+    {255, 255, 102}};
+
+typedef struct bgscreen_type
+{
+    uint8_t bglight;
+    int32_t sunPosH;
+    int32_t sunPosV;
+    rgb_t bgColor;
+    rgb_t sunColor;
+    bool upDn;
 } bgscreen;
 
 bgscreen bground;
+bgscreen currBground;
 
-void update_bground(uint32_t hh, uint32_t mm)
+void update_bground_target(uint32_t hh, uint32_t mm)
 {
+
     // Depending on the hour, we decide to have one or more windows
-    // During the night there's only one window w1
-    if ((hh <= 6) || (hh > 19))
+    // During the night low ligth
+
+    // Let's rewrite it properly
+    uint32_t theTime = hh * 60 + mm;
+    theTime = theTime / 60;
+
+    if (theTime < (sunrise - 1))
     {
         bground.bglight = 128;
-        bground.w1bv    = 0;
-        bground.w1bh    = 0;
-        bground.w1ev    = 240;
-        bground.w1eh    = 320;
-        bground.w1r     = 0;
-        bground.w1g     = 0;
-        bground.w1b     = 100;
-        bground.w2bh = bground.w2eh = bground.w2bv = bground.w2ev = 0;
-        bground.w3bh = bground.w3eh = bground.w3bv = bground.w3ev = 0;
-        bground.w4bh = bground.w4eh = bground.w4bv = bground.w4ev = 0;
-        background                                                = Stars;
+        bground.bgColor = colors[0];
+        bground.sunColor = sunshine[0];
+        background = NigthLigth;
     }
-    if ((hh > 6) && (hh <= 9))
+    else
     {
-        int totMinutes = 60 * (hh - 6) + mm;
+        if (theTime < sunrise)
+        {
+            bground.bglight = 128;
+            bground.bgColor = colors[10];
+            bground.sunColor = sunshine[0];
+            background = NigthLigth;
+        }
+        else
+        {
+            if (theTime < (sunrise + 1))
+            {
+                bground.bglight = 255;
+                bground.bgColor = colors[10];
+                bground.sunColor = sunshine[1];
+                bground.sunPosH = ((((hh - sunrise) * 60 + mm) - (SUNSIZE / 2)) * deltaH);
+                background = DayLight;
+            }
+            else
+            {
+                if (theTime < (sunset - 1))
+                {
+                    bground.bglight = 255;
+                    bground.bgColor = colors[10];
+                    bground.sunColor = sunshine[1];
+                    bground.sunPosH = ((((hh - sunrise) * 60 + mm) - (SUNSIZE / 2)) * deltaH);
+                    background = DayLight;
+                }
+                else
+                {
+                    if (theTime < (sunset))
+                    {
+                        bground.bglight = 128;
+                        bground.sunColor = sunshine[0];
+                        bground.sunPosH = ((((hh - sunrise) * 60 + mm) - (SUNSIZE / 2)) * deltaH);
+                        bground.bgColor = colors[10];
+                        background = DayLight;
+                    }
+                    else
+                    {
+                        if (theTime < (sunset + 1))
+                        {
 
-        bground.bglight = 128 + (128 / 4) * (hh - 6);
-        bground.w1bh = bground.w1bv = 0;
-        bground.w1ev                = 240;
-        bground.w1eh                = totMinutes;
-        bground.w1r                 = 128;
-        bground.w1g                 = 212;
-        bground.w1b                 = 255;
-        bground.w2bv                = 0;
-        bground.w2bh                = bground.w1eh;
-        bground.w2ev                = 240;
-        bground.w2eh                = 320;
-        bground.w2r                 = 0;
-        bground.w2g                 = 0;
-        bground.w2b                 = 100;
-        bground.w3bh = bground.w3eh = bground.w3bv = bground.w3ev = 0;
-        bground.w4bh = bground.w4eh = bground.w4bv = bground.w4ev = 0;
-        background = Balloons;
+                            bground.bglight = 128;
+                            bground.sunColor = sunshine[0];
+                            bground.bgColor = colors[0];
+                            background = NigthLigth;
+                        }
+                        else
+                        {
+                            bground.bglight = 128;
+                            bground.bgColor = colors[0];
+                            bground.sunColor = sunshine[0];
+                            background = NigthLigth;
+                        }
+                    }
+                }
+            }
+        }
     }
-    if ((hh > 9) && (hh <= 16))
-    {
-        bground.bglight = 255;
-        bground.w1bh = bground.w1eh = bground.w1bv = bground.w1ev = 0;
-        bground.w2bv                                              = 0;
-        bground.w2bh                                              = 0;
-        bground.w2ev                                              = 240;
-        bground.w2eh                                              = 320;
-        bground.w2r                                               = 128;
-        bground.w2g                                               = 212;
-        bground.w2b                                               = 255;
-        bground.w3bh = bground.w3eh = bground.w3bv = bground.w3ev = 0;
-        bground.w4bh = bground.w4eh = bground.w4bv = bground.w4ev = 0;
-        background                                                = Balloons;
-    }
-    if ((hh > 16) && (hh <= 19))
-    {
-        int totMinutes  = 60 * (hh - 16) + mm;
 
-        bground.bglight = bground.bglight = 255 - (128 / 4) * (hh - 6);
-        bground.w1bh = bground.w1bv                               = 0;
-        bground.w1ev                                              = 240;
-        bground.w1eh                                              = 140 + totMinutes;
-        bground.w1r                                               = 0;
-        bground.w1g                                               = 0;
-        bground.w1b                                               = 100;
-        bground.w2bv                                              = 0;
-        bground.w2bh                                              = bground.w1eh;
-        bground.w2ev                                              = 240;
-        bground.w2eh                                              = 320;
-        bground.w2r                                               = 128;
-        bground.w2g                                               = 212;
-        bground.w2b                                               = 255;
-        bground.w3bh = bground.w3eh = bground.w3bv = bground.w3ev = 0;
-        bground.w4bh = bground.w4eh = bground.w4bv = bground.w4ev = 0;
-        background                                                = Balloons;
+    currBground.sunPosV = bground.sunPosV;
+    currBground.sunPosH = bground.sunPosH;
+    bground.upDn = true;
+}
+
+// paintCallback does change the background color smoothly
+bool paintCallback(struct repeating_timer *rt)
+{
+    // Let's start with the brightness
+    if (bground.bglight != currBground.bglight)
+    {
+        currBground.bglight = (bground.bglight > currBground.bglight) ? currBground.bglight + 1 : currBground.bglight - 1;
     }
+    // Let's continue with colors, here we need to prioritize red at sunrise and sunset
+    if (bground.bgColor.r != currBground.bgColor.r)
+    {
+        currBground.bgColor.r = (bground.bgColor.r > currBground.bgColor.r) ? currBground.bgColor.r + 1 : currBground.bgColor.r - 1;
+    }
+    else
+    {
+        if (bground.bgColor.b != currBground.bgColor.b)
+        {
+            currBground.bgColor.b = (bground.bgColor.b > currBground.bgColor.b) ? currBground.bgColor.b + 1 : currBground.bgColor.b - 1;
+        }
+        else
+        {
+            if (bground.bgColor.g != currBground.bgColor.g)
+            {
+                currBground.bgColor.g = (bground.bgColor.g > currBground.bgColor.g) ? currBground.bgColor.g + 1 : currBground.bgColor.g - 1;
+            }
+        }
+    }
+
+    // Let's also properly set the sun
+    if (bground.sunColor.r != currBground.sunColor.r)
+    {
+        currBground.sunColor.r = (bground.sunColor.r > currBground.sunColor.r) ? currBground.sunColor.r + 1 : currBground.sunColor.r - 1;
+    }
+    else
+    {
+        if (bground.sunColor.b != currBground.sunColor.b)
+        {
+            currBground.sunColor.b = (bground.sunColor.b > currBground.sunColor.b) ? currBground.sunColor.b + 1 : currBground.sunColor.b - 1;
+        }
+        else
+        {
+            if (bground.sunColor.g != currBground.sunColor.g)
+            {
+                currBground.sunColor.g = (bground.sunColor.g > currBground.sunColor.g) ? currBground.sunColor.g + 1 : currBground.sunColor.g - 1;
+            }
+        }
+    }
+
+    return true;
 }
 
 bool oneMinuteCallback(struct repeating_timer *rt)
 {
-    update_bground(t.hour, t.min);
+    update_bground_target(t.hour, t.min);
+    /* Testing the updates a bit faster than on real time
+    static uint32_t hh = 0;
+    static uint32_t mm = 0;
+
+    if (++mm > 59)
+    {
+        mm = 0;
+        if (++hh > 24)
+        {
+            hh = 0;
+        }
+    }
+    update_bground(hh, mm);
+     End of test part */
     return true;
 }
 
 void initialise_bg(void)
 {
+
+    dayLength = (sunset - sunrise) * 60.0;
+    deltaH = (320.0 + SUNSIZE) / dayLength;
+
     for (int i = 0; i < OBJECTS; i++)
     {
         pt shape;
 
-        shape.x  = rand() % (pico_display.bounds.w);
-        shape.y  = rand() % w2dwn;
-        shape.r  = (rand() % 10) + 3;
+        shape.x = rand() % (pico_display.bounds.w);
+        shape.y = rand() % w2dwn;
+        shape.r = (rand() % 10) + 3;
         shape.dx = float(rand() % 255) / 64.0f;
         shape.dy = float(rand() % 255) / 64.0f;
         shape.pen =
             pico_display.create_pen(rand() % 255, rand() % 255, rand() % 255);
         shapes.push_back(shape);
-        shape.upDn  = true;
+        shape.upDn = true;
         shape.shine = float(rand() % 255) / 64.0f;
     }
-    add_repeating_timer_ms(50, oneMinuteCallback, NULL, &oneMinuteTimer);
+
+    bground.bglight = 128;
+    bground.sunColor = sunshine[0];
+    bground.sunPosH = 0;
+    bground.sunPosV = 0;
+
+    update_bground_target(t.hour, t.min);
+
+    currBground.bglight = bground.bglight;
+    currBground.sunPosH = bground.sunPosH;
+    currBground.sunPosV = bground.sunPosV;
+    currBground.sunColor = bground.sunColor;
+    currBground.bgColor.r = bground.bgColor.r;
+    currBground.bgColor.g = bground.bgColor.g;
+    currBground.bgColor.b = bground.bgColor.b;
+
+    add_repeating_timer_ms(ONEMINUTE, oneMinuteCallback, NULL, &oneMinuteTimer);
+    add_repeating_timer_ms(PAINT, paintCallback, NULL, &paintTimer);
 }
 
 void draw_background(void)
 {
     static uint16_t counter;
 
-    pico_display.set_backlight(bground.bglight); // was 255
+    pico_display.set_backlight(currBground.bglight); // was 255
+
+    pico_display.set_pen(currBground.bgColor.r, currBground.bgColor.g, currBground.bgColor.b);
 
     pico_display.clear();
 
-    if (bground.w1ev != 0)
-    {
-        pico_display.set_pen(bground.w1r, bground.w1g, bground.w1b); // Dark Blue
-
-        std::vector<Point> poly;
-        poly.push_back(Point(bground.w1bh, bground.w1bv));
-        poly.push_back(Point(bground.w1eh, bground.w1bv));
-        poly.push_back(Point(bground.w1eh, bground.w1ev));
-        poly.push_back(Point(bground.w1bh, bground.w1ev));
-
-        pico_display.polygon(poly);
-    }
-
-    if (bground.w2ev != 0)
-    {
-        pico_display.set_pen(bground.w2r, bground.w2g, bground.w2b); // Dark Blue
-
-        std::vector<Point> poly;
-        poly.push_back(Point(bground.w2bh, bground.w2bv));
-        poly.push_back(Point(bground.w2eh, bground.w2bv));
-        poly.push_back(Point(bground.w2eh, bground.w2ev));
-        poly.push_back(Point(bground.w2bh, bground.w2ev));
-
-        pico_display.polygon(poly);
-    }
-
-    if (bground.w3ev != 0)
-    {
-        pico_display.set_pen(bground.w3r, bground.w3g, bground.w3b); // Dark Blue
-
-        std::vector<Point> poly;
-        poly.push_back(Point(bground.w3bh, bground.w3bv));
-        poly.push_back(Point(bground.w3eh, bground.w3bv));
-        poly.push_back(Point(bground.w3eh, bground.w3ev));
-        poly.push_back(Point(bground.w3bh, bground.w3ev));
-
-        pico_display.polygon(poly);
-    }
-
-    if (bground.w4ev != 0)
-    {
-        pico_display.set_pen(bground.w4r, bground.w4g, bground.w4b); // Dark Blue
-
-        std::vector<Point> poly;
-        poly.push_back(Point(bground.w4bh, bground.w4bv));
-        poly.push_back(Point(bground.w4eh, bground.w4bv));
-        poly.push_back(Point(bground.w4eh, bground.w4ev));
-        poly.push_back(Point(bground.w4bh, bground.w4ev));
-
-        pico_display.polygon(poly);
-    }
-
     counter++;
-    for (auto &shape : shapes)
+
+    if (background == DayLight)
     {
-        if (background == Balloons)
+        static float_t rlen = 0;
+
+        int r1, r2, rs;
+
+        if (bground.upDn == true)
+            rlen += 0.1;
+        else
+            rlen -= 0.1;
+
+        if (rlen > (SUNSIZE))
+            bground.upDn = false;
+
+        if (rlen < 0.0)
+            bground.upDn = true;
+
+        r1 = rlen + SUNSIZE + SUNSIZE / 2;
+        r2 = (SUNSIZE + SUNSIZE + SUNSIZE / 2) - rlen;
+
+        pico_display.set_pen(255, 255, 0); // Shining yellow
+
+        // Plot the rays
+        for (int i = 0; i < 4; i++)
         {
-            shape.y = shape.y > w1dwn ? w1dwn : shape.y;
+            rs = r1;
+            if (i % 2)
+                rs = r2;
 
-            shape.x += shape.dx;
-            shape.y += shape.dy;
-            if ((shape.x - shape.r) < 0)
-            {
-                shape.dx *= -1;
-                shape.x = shape.r;
-            }
-            if ((shape.x + shape.r) >= (pico_display.bounds.w))
-            {
-                shape.dx *= -1;
-                shape.x = pico_display.bounds.w - shape.r;
-            }
-            if ((shape.y - shape.r) < 0)
-            {
-                shape.dy *= -1;
-                shape.y = shape.r;
-            }
-            if ((shape.y + shape.r) >= w1dwn)
-            {
-                shape.dy *= -1;
-                shape.y = w1dwn - shape.r;
-            }
-
-            pico_display.set_pen(shape.pen);
-            pico_display.circle(Point(shape.x, shape.y), shape.r);
+            pico_display.line(Point(currBground.sunPosH - rs * rays[i].x, currBground.sunPosV - rs * rays[i].y),
+                              Point(currBground.sunPosH + rs * rays[i].x, currBground.sunPosV + rs * rays[i].y));
+            pico_display.line(Point(currBground.sunPosH - rs * rays[i].y, currBground.sunPosV + rs * rays[i].x),
+                              Point(currBground.sunPosH + rs * rays[i].y, currBground.sunPosV - rs * rays[i].x));
         }
-        if (background == Stars)
+
+        pico_display.set_pen(currBground.sunColor.r, currBground.sunColor.g, currBground.sunColor.b);
+        pico_display.circle(Point(currBground.sunPosH, currBground.sunPosV), SUNSIZE);
+    }
+
+    if (background == NigthLigth)
+    {
+        for (auto &shape : shapes)
         {
-            // Let's slowly move the stars from right to left
+            // Let's slowly move the Nigth from right to left
             shape.x -= 6 / 3600.0;
 
             if (shape.upDn == true)
@@ -280,7 +353,7 @@ void draw_background(void)
                 shape.upDn = (shape.upDn == true) ? false : true;
 
             int cross = int(abs(shape.shine));
-            int diag  = cross / 2;
+            int diag = cross / 2;
 
             if (shape.x < 5)
             {
