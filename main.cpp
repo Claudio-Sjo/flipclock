@@ -1,3 +1,4 @@
+/* Added DS3231_HAL */
 #include "main.hpp"
 
 #include <math.h>
