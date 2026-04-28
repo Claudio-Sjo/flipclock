@@ -12,61 +12,66 @@
 #include "pico/stdlib.h"
 #include "pico_display_2.hpp"
 
-// European capital cities: {latitude, longitude}
-#define AMSTERDAM    52.37f,   4.90f
-#define ANDORRA      42.51f,   1.52f
-#define ATHENS       37.98f,  23.73f
-#define BELGRADE     44.79f,  20.47f
-#define BERLIN       52.52f,  13.41f
-#define BERN         46.95f,   7.45f
-#define BRATISLAVA   48.15f,  17.11f
-#define BRUSSELS     50.85f,   4.35f
-#define BUCHAREST    44.43f,  26.10f
-#define BUDAPEST     47.50f,  19.04f
-#define CHISINAU     47.01f,  28.86f
-#define COPENHAGEN   55.68f,  12.57f
-#define DUBLIN       53.35f,  -6.26f
-#define HELSINKI     60.17f,  24.94f
-#define KYIV         50.45f,  30.52f
-#define LISBON       38.72f,  -9.14f
-#define LJUBLJANA    46.06f,  14.51f
-#define LONDON       51.51f,  -0.13f
-#define LUXEMBOURG   49.61f,   6.13f
-#define MADRID       40.42f,  -3.70f
-#define MINSK        53.90f,  27.57f
-#define MONACO       43.73f,   7.42f
-#define MOSCOW       55.76f,  37.62f
-#define NICOSIA      35.19f,  33.38f
-#define OSLO         59.91f,  10.75f
-#define PARIS        48.86f,   2.35f
-#define PODGORICA    42.44f,  19.26f
-#define PRAGUE       50.08f,  14.42f
-#define REYKJAVIK    64.15f, -21.94f
-#define RIGA         56.95f,  24.11f
-#define ROME         41.90f,  12.50f
-#define SAN_MARINO   43.94f,  12.46f
-#define SARAJEVO     43.86f,  18.41f
-#define SKOPJE       42.00f,  21.43f
-#define SOFIA        42.70f,  23.32f
-#define STOCKHOLM    59.33f,  18.07f
-#define TALLINN      59.44f,  24.75f
-#define TIRANA       41.33f,  19.82f
-#define VADUZ        47.14f,   9.52f
-#define VALLETTA     35.90f,  14.51f
-#define VATICAN      41.90f,  12.45f
-#define VIENNA       48.21f,  16.37f
-#define VILNIUS      54.69f,  25.28f
-#define WARSAW       52.23f,  21.01f
-#define ZAGREB       45.81f,  15.98f
+// European capital cities location table
+typedef struct {
+    const char *name;
+    float_t lat;
+    float_t lng;
+} location_t;
 
-// Select location here
-#define LOCATION     ROME
+static const location_t locations[] = {
+    {"Amsterdam",  52.37f,   4.90f},
+    {"Andorra",    42.51f,   1.52f},
+    {"Athens",     37.98f,  23.73f},
+    {"Belgrade",   44.79f,  20.47f},
+    {"Berlin",     52.52f,  13.41f},
+    {"Bern",       46.95f,   7.45f},
+    {"Bratislava", 48.15f,  17.11f},
+    {"Brussels",   50.85f,   4.35f},
+    {"Bucharest",  44.43f,  26.10f},
+    {"Budapest",   47.50f,  19.04f},
+    {"Chisinau",   47.01f,  28.86f},
+    {"Copenhagen", 55.68f,  12.57f},
+    {"Dublin",     53.35f,  -6.26f},
+    {"Helsinki",   60.17f,  24.94f},
+    {"Kyiv",       50.45f,  30.52f},
+    {"Lisbon",     38.72f,  -9.14f},
+    {"Ljubljana",  46.06f,  14.51f},
+    {"London",     51.51f,  -0.13f},
+    {"Luxembourg", 49.61f,   6.13f},
+    {"Madrid",     40.42f,  -3.70f},
+    {"Minsk",      53.90f,  27.57f},
+    {"Monaco",     43.73f,   7.42f},
+    {"Moscow",     55.76f,  37.62f},
+    {"Nicosia",    35.19f,  33.38f},
+    {"Oslo",       59.91f,  10.75f},
+    {"Paris",      48.86f,   2.35f},
+    {"Podgorica",  42.44f,  19.26f},
+    {"Prague",     50.08f,  14.42f},
+    {"Reykjavik",  64.15f, -21.94f},
+    {"Riga",       56.95f,  24.11f},
+    {"Rome",       41.90f,  12.50f},
+    {"San Marino", 43.94f,  12.46f},
+    {"Sarajevo",   43.86f,  18.41f},
+    {"Skopje",     42.00f,  21.43f},
+    {"Sofia",      42.70f,  23.32f},
+    {"Stockholm",  59.33f,  18.07f},
+    {"Tallinn",    59.44f,  24.75f},
+    {"Tirana",     41.33f,  19.82f},
+    {"Vaduz",      47.14f,   9.52f},
+    {"Valletta",   35.90f,  14.51f},
+    {"Vatican",    41.90f,  12.45f},
+    {"Vienna",     48.21f,  16.37f},
+    {"Vilnius",    54.69f,  25.28f},
+    {"Warsaw",     52.23f,  21.01f},
+    {"Zagreb",     45.81f,  15.98f},
+};
 
-#define LOCATION_LAT_LNG(loc) loc
-#define _GET_LAT(lat, lng) lat
-#define _GET_LNG(lat, lng) lng
-#define LOCATION_LAT _GET_LAT(LOCATION_LAT_LNG(LOCATION))
-#define LOCATION_LNG _GET_LNG(LOCATION_LAT_LNG(LOCATION))
+#define NUM_LOCATIONS (sizeof(locations) / sizeof(locations[0]))
+#define DEFAULT_LOCATION 30 // Rome
+
+int currentLocation = DEFAULT_LOCATION;
+
 #define UTC_OFFSET   1
 
 extern float_t calculateSunrise(int32_t year, int32_t month, int32_t day, float_t lat, float_t lng, int32_t localOffset, int32_t daylightSavings);
@@ -288,13 +293,18 @@ bool paintCallback(struct repeating_timer *rt)
 static void recalcSunTimes(void)
 {
     int dst = isEuropeanDST(&t) ? 1 : 0;
-    float_t sr = calculateSunrise(t.year, t.month, t.day, LOCATION_LAT, LOCATION_LNG, UTC_OFFSET, dst);
-    float_t ss = calculateSunset(t.year, t.month, t.day, LOCATION_LAT, LOCATION_LNG, UTC_OFFSET, dst);
+    float_t lat = locations[currentLocation].lat;
+    float_t lng = locations[currentLocation].lng;
+    float_t sr = calculateSunrise(t.year, t.month, t.day, lat, lng, UTC_OFFSET, dst);
+    float_t ss = calculateSunset(t.year, t.month, t.day, lat, lng, UTC_OFFSET, dst);
     sunrise = (uint32_t)sr;
     sunset  = (uint32_t)ss;
     dayLength = (sunset - sunrise) * 60.0;
     deltaH = (320.0 + SUNSIZE) / dayLength;
 }
+
+int getNumLocations(void) { return NUM_LOCATIONS; }
+const char *getLocationName(int idx) { return locations[idx].name; }
 
 bool oneMinuteCallback(struct repeating_timer *rt)
 {

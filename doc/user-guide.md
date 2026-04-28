@@ -33,13 +33,17 @@ The currently selected field is highlighted in green, and "Setup" is displayed a
 | Button | Action                                          |
 |--------|-------------------------------------------------|
 | A      | Exit setup and save time to RTC                 |
-| B      | Cycle to next field (Hours → Minutes → Day → Day of Week → Month → Year) |
+| B      | Cycle to next field (Hours → Minutes → Day → Day of Week → Month → Year → Location) |
 | X      | Increment selected field                        |
 | Y      | Decrement selected field                        |
 
-All fields wrap around at their boundaries (e.g., hours: 23 → 0, months: December → January). Day limits are month-aware (28/29/30/31).
+All fields wrap around at their boundaries (e.g., hours: 23 → 0, months: December → January, locations: Zagreb → Amsterdam). Day limits are month-aware (28/29/30/31).
 
 While in setup mode, seconds are frozen at 0. On exit, the time is written to both the Pico's internal RTC and the DS3231 hardware RTC.
+
+## Location Setting
+
+When the **Location** field is selected, the screen displays "Location" with the city name below it. Use X/Y to cycle through 45 European capital cities (alphabetically sorted). The selected location is used for sunrise/sunset calculations that drive the day/night background animation.
 
 ## Button Press Types
 

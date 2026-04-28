@@ -9,7 +9,7 @@ Entry point. Initializes I2C, display, DS3231 RTC, and repeating timers. Runs th
 **Defines** (main.hpp):
 - `pt` — particle/shape struct for background animation (position, velocity, color, shine)
 - `displayState` enum — `Clock`, `ClockSetup`, `DateSetup`, `AlarmSetup`
-- `setupState` enum — `Hours`, `Minutes`, `Day`, `Dotw`, `Month`, `Year`
+- `setupState` enum — `Hours`, `Minutes`, `Day`, `Dotw`, `Month`, `Year`, `Location`
 - `dayOfWeek`, `monthOfYear`, `backGround` enums
 
 ### clock.cpp / clock.hpp
@@ -52,7 +52,7 @@ Menu state machine. Processes key events from `ReadInput()`:
 | Button | Clock mode          | ClockSetup mode                    |
 |--------|---------------------|------------------------------------|
 | A      | Enter setup         | Exit setup (save time)             |
-| B      | —                   | Cycle field (H→M→D→DoW→Mo→Y)      |
+| B      | —                   | Cycle field (H→M→D→DoW→Mo→Y→Loc)  |
 | X      | —                   | Increment selected field           |
 | Y      | —                   | Decrement selected field           |
 
@@ -60,10 +60,13 @@ Handles month-aware day limits (28/29/30/31) and wrapping for all fields.
 
 ### background.cpp / background.hpp
 
-Animated sky background with day/night cycle.
+Animated sky background with day/night cycle driven by the selected location's sunrise/sunset times.
 
-- **Daytime** (6:00–19:00): blue sky, sun with pulsating rays tracking across the screen
+- **Location table** — 45 European capital cities with lat/lng coordinates; runtime-selectable via `currentLocation` index
+- `getNumLocations()` / `getLocationName(idx)` — accessors for the location table
+- **Daytime**: blue sky, sun with pulsating rays tracking across the screen
 - **Nighttime**: dark blue sky with 50 twinkling star shapes drifting slowly left
+- `recalcSunTimes()` — computes sunrise/sunset from the selected location's coordinates using `calculateSunrise()`/`calculateSunset()`
 - `update_bground_target()` — sets target colors/brightness based on current hour
 - `paintCallback()` — smoothly transitions RGB values toward targets (1 step per 4 s per channel)
 - `initialise_bg()` — seeds random star positions, starts 1-min and 4-s timers
@@ -74,7 +77,7 @@ Color palette: 11 blue shades from midnight blue to light azure, plus 2 sunshine
 
 Sunrise/sunset calculator using the standard solar position algorithm. Takes year, month, day, latitude, longitude, UTC offset, and daylight savings flag. Returns decimal hours.
 
-**Currently not wired in** — `background.cpp` uses hardcoded sunrise=6:00, sunset=19:00.
+Used by `background.cpp` to compute sunrise/sunset times for the selected location, which drive the day/night background transitions.
 
 ## Library Modules
 
