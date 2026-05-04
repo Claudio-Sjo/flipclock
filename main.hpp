@@ -36,7 +36,8 @@ enum setupState
     Day,
     Dotw,
     Month,
-    Year
+    Year,
+    Location
 };
 
 enum dayOfWeek

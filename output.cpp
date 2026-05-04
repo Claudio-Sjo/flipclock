@@ -1,5 +1,6 @@
 // Filename output.cpp
 
+#include "background.hpp"
 #include "clock.hpp"
 #include "fonts/bitmap_db.h"
 #include "fonts/clockFonts.h"
@@ -396,6 +397,13 @@ void updateDisplay(void)
     {
         pico_display.set_pen(0, 255, 0); // green
         myPrintLowFont(Point(100, 200), "Setup");
+
+        if (sState == Location)
+        {
+            pico_display.set_pen(0, 255, 0);
+            myPrintLowFont(Point(5, 120), "Location");
+            myPrintLowFont(Point(5, 160), getLocationName(currentLocation));
+        }
     }
 }
 

@@ -104,15 +104,6 @@ int main()
     gpio_set_function(I2C_SDA, GPIO_FUNC_I2C);
     gpio_set_function(I2C_SCL, GPIO_FUNC_I2C);
 
-    sprintf(mainString, "mem I2C Test Program ...");
-
-    uint8_t memDataw[] = {0x55, 0xaa};
-    uint8_t memDatar[2];
-
-    int rc_w = i2c_write_mem_blocking(i2c1, add24lc65, 0, 2, memDataw, 2);
-    sleep_ms(10);
-    int rc_r = i2c_read_mem_blocking(i2c1, add24lc65, 0, 2, memDatar, 2);
-
     // Debouncing Timer
     add_repeating_timer_ms(2, Debounce, NULL, &debounceTimer);
 
@@ -168,16 +159,7 @@ int main()
             // rtc part
             // rtc_get_datetime(&tloc);
             // datetime_to_str(datetime_str, sizeof(datetime_buf), &tloc);
-            sprintf(mainString, "mem i2c : %d %d %x %x %x %x", rc_w, rc_r, memDataw[0], memDataw[1], memDatar[0], memDatar[1]);
-
-            // sprintf(mainString, "%02x:%02x:%02x  ", buf[2], buf[1], buf[0]);
-            pico_display.set_pen(255, 0, 0); // Red
-            pico_display.text(mainString, mainS_location, 320);
-
-            // pico_display.line(scrolling_line_b, scrolling_line_e);
-
             // update screen
-
             pico_display.update();
             oldsk = scheduler;
         }

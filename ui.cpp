@@ -1,4 +1,5 @@
 // Filename ui.cpp
+#include "background.hpp"
 #include "clock.hpp"
 #include "fonts/bitmap_db.h"
 #include "fonts/lowfontgen.h"
@@ -31,7 +32,7 @@ void menuHandler(Key pressed)
     {
         if (dState == ClockSetup)
         {
-            if (++sState > Year)
+            if (++sState > Location)
                 sState = Hours;
         }
     }
@@ -81,6 +82,10 @@ void menuHandler(Key pressed)
             case Year:
                 if (++t.year > 2100)
                     t.year = 2022;
+                break;
+            case Location:
+                if (++currentLocation >= getNumLocations())
+                    currentLocation = 0;
                 break;
             }
         }
@@ -142,6 +147,12 @@ void menuHandler(Key pressed)
                     t.year = 2100;
                 else
                     t.year--;
+                break;
+            case Location:
+                if (currentLocation == 0)
+                    currentLocation = getNumLocations() - 1;
+                else
+                    currentLocation--;
                 break;
             }
         }

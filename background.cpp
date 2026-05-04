@@ -12,6 +12,71 @@
 #include "pico/stdlib.h"
 #include "pico_display_2.hpp"
 
+// European capital cities location table
+typedef struct {
+    const char *name;
+    float_t lat;
+    float_t lng;
+} location_t;
+
+static const location_t locations[] = {
+    {"Amsterdam",  52.37f,   4.90f},
+    {"Andorra",    42.51f,   1.52f},
+    {"Athens",     37.98f,  23.73f},
+    {"Belgrade",   44.79f,  20.47f},
+    {"Berlin",     52.52f,  13.41f},
+    {"Bern",       46.95f,   7.45f},
+    {"Bratislava", 48.15f,  17.11f},
+    {"Brussels",   50.85f,   4.35f},
+    {"Bucharest",  44.43f,  26.10f},
+    {"Budapest",   47.50f,  19.04f},
+    {"Chisinau",   47.01f,  28.86f},
+    {"Copenhagen", 55.68f,  12.57f},
+    {"Dublin",     53.35f,  -6.26f},
+    {"Helsinki",   60.17f,  24.94f},
+    {"Kyiv",       50.45f,  30.52f},
+    {"Lisbon",     38.72f,  -9.14f},
+    {"Ljubljana",  46.06f,  14.51f},
+    {"London",     51.51f,  -0.13f},
+    {"Luxembourg", 49.61f,   6.13f},
+    {"Madrid",     40.42f,  -3.70f},
+    {"Minsk",      53.90f,  27.57f},
+    {"Monaco",     43.73f,   7.42f},
+    {"Moscow",     55.76f,  37.62f},
+    {"Nicosia",    35.19f,  33.38f},
+    {"Oslo",       59.91f,  10.75f},
+    {"Paris",      48.86f,   2.35f},
+    {"Podgorica",  42.44f,  19.26f},
+    {"Prague",     50.08f,  14.42f},
+    {"Reykjavik",  64.15f, -21.94f},
+    {"Riga",       56.95f,  24.11f},
+    {"Rome",       41.90f,  12.50f},
+    {"San Marino", 43.94f,  12.46f},
+    {"Sarajevo",   43.86f,  18.41f},
+    {"Skopje",     42.00f,  21.43f},
+    {"Sofia",      42.70f,  23.32f},
+    {"Stockholm",  59.33f,  18.07f},
+    {"Tallinn",    59.44f,  24.75f},
+    {"Tirana",     41.33f,  19.82f},
+    {"Vaduz",      47.14f,   9.52f},
+    {"Valletta",   35.90f,  14.51f},
+    {"Vatican",    41.90f,  12.45f},
+    {"Vienna",     48.21f,  16.37f},
+    {"Vilnius",    54.69f,  25.28f},
+    {"Warsaw",     52.23f,  21.01f},
+    {"Zagreb",     45.81f,  15.98f},
+};
+
+#define NUM_LOCATIONS (sizeof(locations) / sizeof(locations[0]))
+#define DEFAULT_LOCATION 30 // Rome
+
+int currentLocation = DEFAULT_LOCATION;
+
+#define UTC_OFFSET   1
+
+extern float_t calculateSunrise(int32_t year, int32_t month, int32_t day, float_t lat, float_t lng, int32_t localOffset, int32_t daylightSavings);
+extern float_t calculateSunset(int32_t year, int32_t month, int32_t day, float_t lat, float_t lng, int32_t localOffset, int32_t daylightSavings);
+
 // 2022/04/06 - New strategy
 // - draw_background shall set all the screen background starting from the colors, windows etc.
 // - The object shown will change from day to night
@@ -30,8 +95,8 @@
 
 std::vector<pt> shapes;
 
-uint32_t sunrise = 6 * 1 + 0; // in minutes
-uint32_t sunset = 19 * 1 + 0; // in minutes
+uint32_t sunrise = 6;  // recalculated from location
+uint32_t sunset  = 19; // recalculated from location
 float_t dayLength = 0.0;      // In minutes
 float_t deltaH;
 bgEnum background = NigthLigth;
@@ -225,8 +290,25 @@ bool paintCallback(struct repeating_timer *rt)
     return true;
 }
 
+static void recalcSunTimes(void)
+{
+    int dst = isEuropeanDST(&t) ? 1 : 0;
+    float_t lat = locations[currentLocation].lat;
+    float_t lng = locations[currentLocation].lng;
+    float_t sr = calculateSunrise(t.year, t.month, t.day, lat, lng, UTC_OFFSET, dst);
+    float_t ss = calculateSunset(t.year, t.month, t.day, lat, lng, UTC_OFFSET, dst);
+    sunrise = (uint32_t)sr;
+    sunset  = (uint32_t)ss;
+    dayLength = (sunset - sunrise) * 60.0;
+    deltaH = (320.0 + SUNSIZE) / dayLength;
+}
+
+int getNumLocations(void) { return NUM_LOCATIONS; }
+const char *getLocationName(int idx) { return locations[idx].name; }
+
 bool oneMinuteCallback(struct repeating_timer *rt)
 {
+    recalcSunTimes();
     update_bground_target(t.hour, t.min);
     /* Testing the updates a bit faster than on real time
     static uint32_t hh = 0;
@@ -248,8 +330,7 @@ bool oneMinuteCallback(struct repeating_timer *rt)
 void initialise_bg(void)
 {
 
-    dayLength = (sunset - sunrise) * 60.0;
-    deltaH = (320.0 + SUNSIZE) / dayLength;
+    recalcSunTimes();
 
     for (int i = 0; i < OBJECTS; i++)
     {

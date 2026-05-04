@@ -135,6 +135,14 @@ bool oneTwenthCallback(struct repeating_timer *rt)
         else
         {
             rtc_get_datetime(&t);
+            if (isEuropeanDST(&t))
+            {
+                if (++t.hour > 23)
+                {
+                    t.hour = 0;
+                    // Day rollover not critical for display purposes
+                }
+            }
         }
         scheduler = 0;
     }
@@ -146,4 +154,41 @@ bool oneTwenthCallback(struct repeating_timer *rt)
     oldState = dState;
 
     return true;
+}
+
+// European DST: starts last Sunday of March at 02:00, ends last Sunday of October at 03:00
+// RTC stores winter time (CET). Returns true if summer time (CEST) applies.
+bool isEuropeanDST(const datetime_t *dt)
+{
+    if (dt->month > March && dt->month < October)
+        return true;
+    if (dt->month < March || dt->month > October)
+        return false;
+
+    // Find last Sunday of the month: day 31 (March) or 31 (October) minus offset
+    int lastDay = 31; // Both March and October have 31 days
+    // Compute day-of-week of the 31st from current date's dotw
+    // dotw: 0=Sunday
+    int dow31    = (dt->dotw + (lastDay - dt->day)) % 7;
+    int lastSun  = lastDay - dow31;
+
+    if (dt->month == March)
+    {
+        // DST starts at 02:00 on last Sunday of March
+        if (dt->day > lastSun)
+            return true;
+        if (dt->day == lastSun && dt->hour >= 2)
+            return true;
+        return false;
+    }
+    else // October
+    {
+        // DST ends at 03:00 (summer time) on last Sunday of October
+        // Since RTC is in winter time, that's 02:00 winter time
+        if (dt->day > lastSun)
+            return false;
+        if (dt->day == lastSun && dt->hour >= 2)
+            return false;
+        return true;
+    }
 }

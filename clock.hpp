@@ -22,5 +22,6 @@ extern datetime_t t;
 
 void updateHour(uint8_t hh, uint8_t mm, uint8_t ss);
 bool oneTwenthCallback(struct repeating_timer *t);
+bool isEuropeanDST(const datetime_t *dt);
 
 #endif
